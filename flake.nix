@@ -130,6 +130,29 @@
 
         desktop = mkNixos "desktop" [
           ./hardware-configuration.nix
+          {
+            boot.loader = {
+              # Disable systemd-boot if omarchy or defaults enable it (prevents conflicts)
+              systemd-boot.enable = false;
+      
+              # Use GRUB for compatibility with both UEFI and legacy BIOS
+              grub = {
+                enable = true;
+                version = 2;
+                device = "nodev";               # UEFI: no legacy MBR write (avoids assertion failure)
+                efiSupport = true;              # Enables EFI/UEFI mode
+                efiInstallAsRemovable = true;   # Fallback path for quirky UEFI firmwares
+                useOSProber = true;             # Optional: detect other OSes (e.g. Windows dual-boot)
+                configurationLimit = 10;        # Optional: limit generations in /boot
+              };
+      
+              # EFI settings (required for GRUB in UEFI mode)
+              efi = {
+                canTouchEfiVariables = true;    # NixOS manages EFI boot entries
+                efiSysMountPoint = "/boot";     # Matches your partitioning (ESP at /boot)
+              };
+            };
+          }
         ];
 
         wsl = mkNixos "wsl" [
