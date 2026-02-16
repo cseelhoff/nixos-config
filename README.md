@@ -39,18 +39,24 @@ This is my personal declarative NixOS configuration using **flakes**, **home-man
 
 4. **Generate hardware config (one-time per machine)**
    ```bash
+   sudo git clone https://github.com/cseelhoff/nixos-config.git /mnt/etc/nixos
+   cd /mnt/etc/nixos
    sudo nixos-generate-config --root /mnt
+   sudo git add hardware-configuration.nix
+   sudo nixos-install --no-root-passwd --root /mnt --flake .#desktop
    ```
    → This creates `/mnt/etc/nixos/hardware-configuration.nix` (filesystems, kernel modules, etc.).
 
 5. **Install directly from GitHub flake (one-liner magic)**
    ```bash
-   sudo nixos-install --no-root-passwd --root /mnt \
-     --flake github:caleb-seelhoff/nixos-config#desktop
+   sudo nixos-install --root /mnt --flake github:cseelhoff/nixos-config#desktop
    ```
-   - Replace `#desktop` with `#wsl` if installing in WSL (after initial WSL bootstrap).
-   - `--no-root-passwd` skips root password prompt (set later with `passwd`).
-   - This fetches your flake + lockfile, builds the system, and installs to `/mnt`.
+   - This:
+      - Clones your repo to the target (/mnt/etc/nixos – writable!).
+      - Generates hardware-configuration.nixlocally on this machine (no git push needed!).
+      - Installs from the local flake path (--flake .#desktop).
+   - Use #wsl instead of #desktop for WSL bootstrap (after initial WSL tar install).
+   - --no-root-passwd skips root password (set later with passwd).
 
 6. **Reboot**
    ```bash
