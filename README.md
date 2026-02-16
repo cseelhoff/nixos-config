@@ -21,15 +21,19 @@ This is my personal declarative NixOS configuration using **flakes**, **home-man
    - Use `lsblk` to identify your target disk (e.g. `/dev/sda` or `/dev/nvme0n1`).
    - Partition (UEFI example – adapt for your setup or use `cfdisk`/`parted`):
      ```bash
-     parted /dev/sda -- mklabel gpt
-     parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB
-     parted /dev/sda -- set 1 esp on
-     parted /dev/sda -- mkpart root ext4 512MiB 100%
-     mkfs.fat -F 32 -n BOOT /dev/sda1
-     mkfs.ext4 -L nixos /dev/sda2
-     mount /dev/disk/by-label/nixos /mnt
-     mkdir -p /mnt/boot
-     mount /dev/disk/by-label/BOOT /mnt/boot
+     sudo parted /dev/sda
+
+     mklabel gpt
+     mkpart ESP fat32 1MiB 512MiB
+     set 1 esp on
+     mkpart root ext4 512MiB 100%
+     quit
+     
+     sudo mkfs.fat -F 32 -n BOOT /dev/sda1
+     sudo mkfs.ext4 -L nixos /dev/sda2
+     sudo mount /dev/disk/by-label/nixos /mnt
+     sudo mkdir -p /mnt/boot
+     sudo mount /dev/disk/by-label/BOOT /mnt/boot
      ```
    - (Optional: add swap, LUKS, etc. – see NixOS manual.)
 
