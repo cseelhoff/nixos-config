@@ -37,12 +37,12 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
    ```
    (Add swap/LUKS/btrfs manually if desired – see NixOS manual.)
 
-4. **Bootstrap your flake** (recommended one-liner)
+4. **Bootstrap your flake**
    ```bash
-   git clone https://github.com/cseelhoff/nixos-config.git /mnt/etc/nixos && \
-   cd /mnt/etc/nixos && \
-   sudo nixos-generate-config --root /mnt && \
-   git add hardware-configuration.nix && \
+   sudo git clone https://github.com/cseelhoff/nixos-config.git /mnt/etc/nixos
+   cd /mnt/etc/nixos
+   sudo nixos-generate-config --root /mnt
+   sudo git add hardware-configuration.nix
    sudo nixos-install --no-root-passwd --root /mnt --flake .#desktop
    ```
    - This:
