@@ -37,8 +37,6 @@
           full_name     = "Admin User";
           email_address = "admin@example.com";
           theme         = "tokyo-night";
-          # Optional: add if you want wallpaper-based theming later
-          # theme_overrides = { wallpaper_path = ./wallpapers/default.png; };
         };
 
         nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -84,7 +82,7 @@
           defaultNetwork.settings.dns_enabled = true;
         };
 
-        # Force-disable real Docker to resolve conflict with podman.dockerCompat
+        # Force-disable real Docker to avoid conflict with podman.dockerCompat
         virtualisation.docker.enable = lib.mkForce false;
 
         services.onedrive.enable = true;
@@ -151,31 +149,30 @@
 
         desktop = mkNixos "desktop" [
           ./hardware-configuration.nix
-          {
-            boot.loader = {
-              systemd-boot.enable = false;
 
-              # Use GRUB for compatibility with both UEFI and legacy BIOS
-              grub = {
+          {
+            # Modern UEFI-only bootloader: systemd-boot
+            boot.loader = {
+              systemd-boot = {
                 enable = true;
-                version = 2;
-                device = "nodev";               # UEFI: no legacy MBR write
-                efiSupport = true;              # Enables EFI/UEFI mode
-                # efiInstallAsRemovable = true; # Only if you set canTouchEfiVariables = false
-                useOSProber = true;
-                configurationLimit = 10;
+                configurationLimit = 10;        # Keep last 10 generations
+                editor = false;                 # Optional: disable editor for security
               };
 
               efi = {
-                canTouchEfiVariables = true;
-                efiSysMountPoint = "/boot";
+                canTouchEfiVariables = true;    # NixOS manages EFI boot order
+                efiSysMountPoint = "/boot";     # Your ESP mountpoint
               };
+
+              # Explicitly disable GRUB (prevents any leftover GRUB from omarchy-nix)
+              grub.enable = false;
             };
           }
         ];
 
         wsl = mkNixos "wsl" [
           nixos-wsl.nixosModules.default
+
           ({ pkgs, ... }: {
             wsl = {
               enable = true;
