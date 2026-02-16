@@ -173,8 +173,7 @@
 
         wsl = mkNixos "wsl" [
           nixos-wsl.nixosModules.default
-
-          {
+          ({ pkgs, ... }: {
             wsl = {
               enable = true;
               useWindowsDriver = true;
@@ -193,7 +192,7 @@
                 { src = "${podman}/bin/podman"; }
               ];
             };
-
+        
             environment = {
               sessionVariables = {
                 CUDA_PATH = "${nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cudatoolkit}";
@@ -203,12 +202,12 @@
                 cudatoolkit
               ];
             };
-
+        
             programs.nix-ld = {
               enable = true;
               package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
             };
-          }
+          })
         ];
       };
     };
