@@ -52,6 +52,7 @@
           wget
           zoxide
           podman-compose
+          dnsutils
         ];
 
         programs = {
