@@ -53,18 +53,38 @@
           nixpkgs-fmt
           wget
           zoxide
+          podman-compose
         ];
 
-        programs.zsh = {
-          enable = true;
-          autosuggestions.enable = true;
-          syntaxHighlighting.enable = true;
-          ohMyZsh = {
+        programs = {
+          zsh = {
             enable = true;
-            theme = "risto";
-            plugins = [ "git" "history" "zoxide" ];
+            autosuggestions.enable = true;
+            syntaxHighlighting.enable = true;
+            ohMyZsh = {
+              enable = true;
+              theme = "risto";
+              plugins = [ "git" "history" "zoxide" ];
+            };
+          };
+
+          fzf.fuzzyCompletion = true;
+
+          neovim = {
+            enable = true;
+            defaultEditor = true;
+            viAlias = true;
+            withPython3 = true;
           };
         };
+
+        virtualisation.podman = {
+          enable = true;
+          dockerCompat = true;
+          defaultNetwork.settings.dns_enabled = true;
+        };
+
+        services.onedrive.enable = true;
 
         users.defaultUserShell = pkgs.zsh;
 
@@ -87,8 +107,8 @@
               eza = {
                 enable = true;
                 enableZshIntegration = true;
-                icons = true;  # ← fixed typo: 'auto' → 'true' (assuming you meant enabled)
                 git = true;
+                icons = auto; # true gives deprecation warning
               };
               fzf.enable = true;
               zoxide = {
@@ -115,7 +135,6 @@
       };
 
       # Helper to build a system with base + extras
-      # No 'system' param or inherit needed anymore
       mkNixos = hostname: extraModules: nixpkgs.lib.nixosSystem {
         modules = [
           baseModule
@@ -138,17 +157,16 @@
               grub = {
                 enable = true;
                 version = 2;
-                device = "nodev";               # UEFI: no legacy MBR write (avoids assertion failure)
+                device = "nodev";               # UEFI: no legacy MBR write
                 efiSupport = true;              # Enables EFI/UEFI mode
-                # efiInstallAsRemovable = true;   # Uncomment only if you set canTouchEfiVariables = false;
-                useOSProber = true;             # Optional: detect other OSes (e.g. Windows dual-boot)
-                configurationLimit = 10;        # Optional: limit generations in /boot
+                # efiInstallAsRemovable = true; # Only if you set canTouchEfiVariables = false
+                useOSProber = true;
+                configurationLimit = 10;
               };
 
-              # EFI settings (required for GRUB in UEFI mode)
               efi = {
-                canTouchEfiVariables = true;    # NixOS manages EFI boot entries
-                efiSysMountPoint = "/boot";     # Matches your partitioning (ESP at /boot)
+                canTouchEfiVariables = true;
+                efiSysMountPoint = "/boot";
               };
             };
           }
@@ -184,30 +202,12 @@
               };
               systemPackages = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
                 cudatoolkit
-                podman-compose
               ];
             };
 
-            programs = {
-              fzf.fuzzyCompletion = true;
-              neovim = {
-                enable = true;
-                defaultEditor = true;
-                viAlias = true;
-                withPython3 = true;
-              };
-              nix-ld = {
-                enable = true;
-                package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
-              };
-            };
-
-            services.onedrive.enable = true;
-
-            virtualisation.podman = {
+            programs.nix-ld = {
               enable = true;
-              dockerCompat = true;
-              defaultNetwork.settings.dns_enabled = true;
+              package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
             };
           }
         ];
