@@ -43,7 +43,7 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
    cd /mnt/etc/nixos
    sudo nixos-generate-config --root /mnt
    sudo git add hardware-configuration.nix
-   sudo nixos-install --no-root-passwd --root /mnt --flake .#desktop
+   sudo nixos-install --root /mnt --flake .#desktop
    ```
    - This:
      - Clones your repo to the target (`/mnt/etc/nixos` – writable!).
