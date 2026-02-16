@@ -5,13 +5,10 @@ This is my personal declarative NixOS configuration using **flakes**, **home-man
 - **desktop**: Native bare-metal/VM install (Hyprland desktop via Omarchy)
 - **wsl**: WSL2 install (with NixOS-WSL module, Podman, CUDA env, nix-ld, etc.)
 
-Everything is unified where possible (shared user `admin`, same Omarchy name/email/theme, zsh setup, common packages).
-
 ## Quick Install on Fresh Machine (NixOS Minimal ISO)
 
 1. **Boot the NixOS Minimal ISO**
    - Download the latest minimal ISO from https://nixos.org/download (e.g. `nixos-25.11-minimal-x86_64-linux.iso`).
-   - Write to USB (e.g. `dd if=... of=/dev/sdX bs=4M status=progress && sync`).
    - Boot from it → login as user `nixos` (no password).
 
 2. **Set up networking** (if needed)
@@ -55,7 +52,7 @@ Everything is unified where possible (shared user `admin`, same Omarchy name/ema
    ```bash
    reboot
    ```
-   → Remove USB/ISO. Log in as `admin` (set password during first login or via `passwd` in live env before reboot).
+   → Remove USB/ISO. Log in as `admin`.
 
 ## Post-Install Tweaks (if needed)
 
@@ -65,7 +62,7 @@ If you want a different hostname than defined in the flake:
 sudo hostnamectl set-hostname mycoolhost
 # Then update flake.nix → add/override networking.hostName = "mycoolhost";
 # Commit & push, then rebuild:
-sudo nixos-rebuild switch --flake github:caleb-seelhoff/nixos-config#mycoolhost
+sudo nixos-rebuild switch --flake github:cseelhoff/nixos-config#mycoolhost
 ```
 
 ### Change username (not recommended – rebuild required)
@@ -84,7 +81,7 @@ Better: keep `admin` and add extra users via `users.users.yourname = { ... };` i
 
 Clone once (optional – you can always use github: directly):
 ```bash
-git clone https://github.com/caleb-seelhoff/nixos-config ~/.config/nixpkgs
+git clone https://github.com/cseelhoff/nixos-config ~/.config/nixpkgs
 cd ~/.config/nixpkgs
 ```
 
@@ -97,7 +94,7 @@ sudo nixos-rebuild switch --flake .#$(hostname)   # or #desktop / #wsl
 
 For WSL-specific first setup:
 - Install NixOS in WSL via official method first (tar or .wsl file).
-- Then `sudo nixos-rebuild switch --flake github:caleb-seelhoff/nixos-config#wsl`
+- Then `sudo nixos-rebuild switch --flake github:cseelhoff/nixos-config#wsl`
 
 ## Tips
 
