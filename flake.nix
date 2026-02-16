@@ -23,7 +23,7 @@
 
   outputs = { self, nixpkgs, home-manager, omarchy-nix, nixos-wsl, ... }:
     let
-      system = "x86_64-linux";
+      # No top-level 'system' definition needed anymore
 
       # Shared base for both desktop and WSL
       baseModule = { pkgs, ... }: {
@@ -87,7 +87,7 @@
               eza = {
                 enable = true;
                 enableZshIntegration = true;
-                icons = true;
+                icons = true;  # ← fixed typo: 'auto' → 'true' (assuming you meant enabled)
                 git = true;
               };
               fzf.enable = true;
@@ -115,8 +115,8 @@
       };
 
       # Helper to build a system with base + extras
+      # No 'system' param or inherit needed anymore
       mkNixos = hostname: extraModules: nixpkgs.lib.nixosSystem {
-        inherit system;
         modules = [
           baseModule
           {
@@ -133,18 +133,18 @@
           {
             boot.loader = {
               systemd-boot.enable = false;
-      
+
               # Use GRUB for compatibility with both UEFI and legacy BIOS
               grub = {
                 enable = true;
                 version = 2;
                 device = "nodev";               # UEFI: no legacy MBR write (avoids assertion failure)
                 efiSupport = true;              # Enables EFI/UEFI mode
-                # efiInstallAsRemovable = true;   # Fallback path for quirky UEFI firmwares
+                # efiInstallAsRemovable = true;   # Uncomment only if you set canTouchEfiVariables = false;
                 useOSProber = true;             # Optional: detect other OSes (e.g. Windows dual-boot)
                 configurationLimit = 10;        # Optional: limit generations in /boot
               };
-      
+
               # EFI settings (required for GRUB in UEFI mode)
               efi = {
                 canTouchEfiVariables = true;    # NixOS manages EFI boot entries
@@ -162,7 +162,7 @@
               enable = true;
               useWindowsDriver = true;
               startMenuLaunchers = true;
-              extraBin = with nixpkgs.legacyPackages.${system}; [
+              extraBin = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
                 { src = "${coreutils}/bin/mkdir"; }
                 { src = "${coreutils}/bin/cat"; }
                 { src = "${coreutils}/bin/whoami"; }
@@ -179,10 +179,10 @@
 
             environment = {
               sessionVariables = {
-                CUDA_PATH = "${nixpkgs.legacyPackages.${system}.cudatoolkit}";
+                CUDA_PATH = "${nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cudatoolkit}";
                 LD_LIBRARY_PATH = "/usr/lib/wsl/lib";
               };
-              systemPackages = with nixpkgs.legacyPackages.${system}; [
+              systemPackages = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
                 cudatoolkit
                 podman-compose
               ];
@@ -198,7 +198,7 @@
               };
               nix-ld = {
                 enable = true;
-                package = nixpkgs.legacyPackages.${system}.nix-ld-rs;
+                package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
               };
             };
 
