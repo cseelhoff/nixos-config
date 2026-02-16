@@ -26,7 +26,7 @@
       # No top-level 'system' definition needed anymore
 
       # Shared base for both desktop and WSL
-      baseModule = { pkgs, ... }: {
+      baseModule = { pkgs, lib, ... }: {
         imports = [
           home-manager.nixosModules.home-manager
           omarchy-nix.nixosModules.default
@@ -77,12 +77,15 @@
             withPython3 = true;
           };
         };
-        virtualisation.docker.enable = false;
+
         virtualisation.podman = {
           enable = true;
           dockerCompat = true;
           defaultNetwork.settings.dns_enabled = true;
         };
+
+        # Force-disable real Docker to resolve conflict with podman.dockerCompat
+        virtualisation.docker.enable = lib.mkForce false;
 
         services.onedrive.enable = true;
 
@@ -192,7 +195,7 @@
                 { src = "${podman}/bin/podman"; }
               ];
             };
-        
+
             environment = {
               sessionVariables = {
                 CUDA_PATH = "${nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cudatoolkit}";
@@ -202,7 +205,7 @@
                 cudatoolkit
               ];
             };
-        
+
             programs.nix-ld = {
               enable = true;
               package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
