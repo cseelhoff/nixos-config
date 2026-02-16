@@ -108,7 +108,6 @@
                 enable = true;
                 enableZshIntegration = true;
                 git = true;
-                icons = auto; # true gives deprecation warning
               };
               fzf.enable = true;
               zoxide = {
