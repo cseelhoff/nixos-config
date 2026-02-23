@@ -1,0 +1,462 @@
+{                                                                                                    
+  description = "NixOS config with Omarchy (desktop) + WSL variant - original backup";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    omarchy-nix = {
+      url = "github:henrysipp/omarchy-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+  outputs = { self, nixpkgs, home-manager, omarchy-nix, nixos-wsl, ... }:
+    let
+      baseModule = { pkgs, lib, ... }: {
+        imports = [
+          home-manager.nixosModules.home-manager
+          omarchy-nix.nixosModules.default
+        ];
+        omarchy = {
+          full_name = "Admin User";
+          email_address = "admin@example.com";
+          theme = "tokyo-night";
+        };
+        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        nixpkgs.config.allowUnfree = true;
+        nixpkgs.config.cudaSupport = true;
+        environment.systemPackages = with pkgs; [
+          bat
+          btop
+          eza
+          fzf
+          git
+          nixpkgs-fmt
+          wget
+          zoxide
+          podman-compose
+          dnsutils
+          brave
+          nvtopPackages.full
+          vscode
+          cudatoolkit
+          cudaPackages.cudnn
+        ];
+        hardware.graphics.enable = true;
+        programs = {
+          zsh = {
+            enable = true;
+            autosuggestions.enable = true;
+            syntaxHighlighting.enable = true;
+            ohMyZsh = {
+              enable = true;
+              theme = "risto";
+              plugins = [ "git" "history" "zoxide" ];
+            };
+          };
+          fzf.fuzzyCompletion = true;
+          neovim = {
+            enable = true;
+            defaultEditor = true;
+            viAlias = true;
+            withPython3 = true;
+          };
+        };
+        virtualisation.podman = {
+          enable = true;
+          dockerCompat = true;
+          defaultNetwork.settings.dns_enabled = true;
+        };
+        virtualisation.docker.enable = lib.mkForce false;
+        users.defaultUserShell = pkgs.zsh;
+        users.users.admin = {
+          isNormalUser = true;
+          extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+        };
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          users.admin = {
+            imports = [
+              omarchy-nix.homeManagerModules.default
+            ];
+            programs = {
+              bat.enable = true;
+              eza = {
+                enable = true;
+                enableZshIntegration = true;
+                git = true;
+              };
+              fzf.enable = true;
+              zoxide = {
+                enable = true;
+                options = [ "--cmd" "cd" ];
+              };
+              zsh = {
+                enable = true;
+                autosuggestion.enable = true;
+                syntaxHighlighting.enable = true;
+                oh-my-zsh = {
+                  enable = true;
+                  theme = "risto";
+                  plugins = [ "git" "history" "zoxide" ];
+                };
+              };
+            };
+            home.stateVersion = "25.11";
+          };
+        };
+        system.stateVersion = "25.11";
+      };
+      mkNixos = hostname: extraModules: nixpkgs.lib.nixosSystem {
+        modules = [
+          baseModule
+          {
+            networking.hostName = hostname;
+          }
+        ] ++ extraModules;
+      };
+    in {
+      nixosConfigurations = {
+        desktop = mkNixos "desktop" [
+          ./hardware-configuration.nix
+          ({ config, pkgs, ... }: {
+            boot.loader = {
+              systemd-boot = {
+                enable = true;
+                configurationLimit = 10;
+                editor = false;
+              };
+              efi = {
+                canTouchEfiVariables = true;
+                efiSysMountPoint = "/boot";
+              };
+              grub.enable = false;
+            };
+            networking.networkmanager.enable = true;
+            time.timeZone = "America/Chicago";
+            i18n = {
+              defaultLocale = "en_US.UTF-8";
+              extraLocaleSettings = {
+                LC_ADDRESS = "en_US.UTF-8";
+                LC_IDENTIFICATION = "en_US.UTF-8";
+                LC_MEASUREMENT = "en_US.UTF-8";
+                LC_MONETARY = "en_US.UTF-8";
+                LC_NAME = "en_US.UTF-8";
+                LC_NUMERIC = "en_US.UTF-8";
+                LC_PAPER = "en_US.UTF-8";
+                LC_TELEPHONE = "en_US.UTF-8";
+                LC_TIME = "en_US.UTF-8";
+              };
+            };
+            services.xserver.xkb = {
+              layout = "us";
+            };
+            users.users.caleb = {
+              isNormalUser = true;
+              description = "caleb";
+              extraGroups = [ "networkmanager" "wheel" ];
+              packages = with pkgs; [];
+            };
+            services.xserver.videoDrivers = [ "nvidia" ];
+            hardware.nvidia = {
+              modesetting.enable = true;
+              open = true;
+              package = config.boot.kernelPackages.nvidiaPackages.beta;
+            };
+            hardware.graphics = {
+              enable = true;
+              enable32Bit = true;
+            };
+            fonts.fontconfig = {
+              defaultFonts.monospace = [ "Hack Nerd Font Mono" ];
+              antialias = true;
+              hinting.enable = true;
+              hinting.style = "full";
+              subpixel.rgba = "none";
+            };
+            fonts.packages = with pkgs; [
+              nerd-fonts.hack
+            ];
+            boot.kernelParams = [
+              "video=HDMI-A-2:3840x2160@60,e"
+            ];
+            system.stateVersion = "25.11";
+          })
+        ];
+        wsl = mkNixos "wsl" [
+          nixos-wsl.nixosModules.default
+          ({ pkgs, ... }: {
+            wsl = {
+              enable = true;
+              useWindowsDriver = true;
+              startMenuLaunchers = true;
+              extraBin = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
+                { src = "${coreutils}/bin/mkdir"; }
+                { src = "${coreutils}/bin/cat"; }
+                { src = "${coreutils}/bin/whoami"; }
+                { src = "${coreutils}/bin/ls"; }
+                { src = "${coreutils}/bin/mv"; }
+                { src = "${coreutils}/bin/id"; }
+                { src = "${coreutils}/bin/uname"; }
+                { src = "${busybox}/bin/addgroup"; }
+                { src = "${su}/bin/groupadd"; }
+                { src = "${su}/bin/usermod"; }
+                { src = "${podman}/bin/podman"; }
+              ];
+            };
+            environment = {
+              sessionVariables = {
+                CUDA_PATH = "${nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cudatoolkit}";
+                LD_LIBRARY_PATH = "/usr/lib/wsl/lib";
+              };
+              systemPackages = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
+                cudatoolkit
+              ];
+            };
+            programs.nix-ld = {
+              enable = true;
+              package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
+            };
+          })
+        ];
+      };
+    };
+}
+{                                                                                                    
+  description = "NixOS config with Omarchy (desktop) + WSL variant - original backup";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    omarchy-nix = {
+      url = "github:henrysipp/omarchy-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+  outputs = { self, nixpkgs, home-manager, omarchy-nix, nixos-wsl, ... }:
+    let
+      baseModule = { pkgs, lib, ... }: {
+        imports = [
+          home-manager.nixosModules.home-manager
+          omarchy-nix.nixosModules.default
+        ];
+        omarchy = {
+          full_name = "Admin User";
+          email_address = "admin@example.com";
+          theme = "tokyo-night";
+        };
+        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        nixpkgs.config.allowUnfree = true;
+        nixpkgs.config.cudaSupport = true;
+        environment.systemPackages = with pkgs; [
+          bat
+          btop
+          eza
+          fzf
+          git
+          nixpkgs-fmt
+          wget
+          zoxide
+          podman-compose
+          dnsutils
+          brave
+          nvtopPackages.full
+          vscode
+          cudatoolkit
+          cudaPackages.cudnn
+        ];
+        hardware.graphics.enable = true;
+        programs = {
+          zsh = {
+            enable = true;
+            autosuggestions.enable = true;
+            syntaxHighlighting.enable = true;
+            ohMyZsh = {
+              enable = true;
+              theme = "risto";
+              plugins = [ "git" "history" "zoxide" ];
+            };
+          };
+          fzf.fuzzyCompletion = true;
+          neovim = {
+            enable = true;
+            defaultEditor = true;
+            viAlias = true;
+            withPython3 = true;
+          };
+        };
+        virtualisation.podman = {
+          enable = true;
+          dockerCompat = true;
+          defaultNetwork.settings.dns_enabled = true;
+        };
+        virtualisation.docker.enable = lib.mkForce false;
+        users.defaultUserShell = pkgs.zsh;
+        users.users.admin = {
+          isNormalUser = true;
+          extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+        };
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          users.admin = {
+            imports = [
+              omarchy-nix.homeManagerModules.default
+            ];
+            programs = {
+              bat.enable = true;
+              eza = {
+                enable = true;
+                enableZshIntegration = true;
+                git = true;
+              };
+              fzf.enable = true;
+              zoxide = {
+                enable = true;
+                options = [ "--cmd" "cd" ];
+              };
+              zsh = {
+                enable = true;
+                autosuggestion.enable = true;
+                syntaxHighlighting.enable = true;
+                oh-my-zsh = {
+                  enable = true;
+                  theme = "risto";
+                  plugins = [ "git" "history" "zoxide" ];
+                };
+              };
+            };
+            home.stateVersion = "25.11";
+          };
+        };
+        system.stateVersion = "25.11";
+      };
+      mkNixos = hostname: extraModules: nixpkgs.lib.nixosSystem {
+        modules = [
+          baseModule
+          {
+            networking.hostName = hostname;
+          }
+        ] ++ extraModules;
+      };
+    in {
+      nixosConfigurations = {
+        desktop = mkNixos "desktop" [
+          ./hardware-configuration.nix
+          ({ config, pkgs, ... }: {
+            boot.loader = {
+              systemd-boot = {
+                enable = true;
+                configurationLimit = 10;
+                editor = false;
+              };
+              efi = {
+                canTouchEfiVariables = true;
+                efiSysMountPoint = "/boot";
+              };
+              grub.enable = false;
+            };
+            networking.networkmanager.enable = true;
+            time.timeZone = "America/Chicago";
+            i18n = {
+              defaultLocale = "en_US.UTF-8";
+              extraLocaleSettings = {
+                LC_ADDRESS = "en_US.UTF-8";
+                LC_IDENTIFICATION = "en_US.UTF-8";
+                LC_MEASUREMENT = "en_US.UTF-8";
+                LC_MONETARY = "en_US.UTF-8";
+                LC_NAME = "en_US.UTF-8";
+                LC_NUMERIC = "en_US.UTF-8";
+                LC_PAPER = "en_US.UTF-8";
+                LC_TELEPHONE = "en_US.UTF-8";
+                LC_TIME = "en_US.UTF-8";
+              };
+            };
+            services.xserver.xkb = {
+              layout = "us";
+            };
+            users.users.caleb = {
+              isNormalUser = true;
+              description = "caleb";
+              extraGroups = [ "networkmanager" "wheel" ];
+              packages = with pkgs; [];
+            };
+            services.xserver.videoDrivers = [ "nvidia" ];
+            hardware.nvidia = {
+              modesetting.enable = true;
+              open = true;
+              package = config.boot.kernelPackages.nvidiaPackages.beta;
+            };
+            hardware.graphics = {
+              enable = true;
+              enable32Bit = true;
+            };
+            fonts.fontconfig = {
+              defaultFonts.monospace = [ "Hack Nerd Font Mono" ];
+              antialias = true;
+              hinting.enable = true;
+              hinting.style = "full";
+              subpixel.rgba = "none";
+            };
+            fonts.packages = with pkgs; [
+              nerd-fonts.hack
+            ];
+            boot.kernelParams = [
+              "video=HDMI-A-2:3840x2160@60,e"
+            ];
+            system.stateVersion = "25.11";
+          })
+        ];
+        wsl = mkNixos "wsl" [
+          nixos-wsl.nixosModules.default
+          ({ pkgs, ... }: {
+            wsl = {
+              enable = true;
+              useWindowsDriver = true;
+              startMenuLaunchers = true;
+              extraBin = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
+                { src = "${coreutils}/bin/mkdir"; }
+                { src = "${coreutils}/bin/cat"; }
+                { src = "${coreutils}/bin/whoami"; }
+                { src = "${coreutils}/bin/ls"; }
+                { src = "${coreutils}/bin/mv"; }
+                { src = "${coreutils}/bin/id"; }
+                { src = "${coreutils}/bin/uname"; }
+                { src = "${busybox}/bin/addgroup"; }
+                { src = "${su}/bin/groupadd"; }
+                { src = "${su}/bin/usermod"; }
+                { src = "${podman}/bin/podman"; }
+              ];
+            };
+            environment = {
+              sessionVariables = {
+                CUDA_PATH = "${nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.cudatoolkit}";
+                LD_LIBRARY_PATH = "/usr/lib/wsl/lib";
+              };
+              systemPackages = with nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}; [
+                cudatoolkit
+              ];
+            };
+            programs.nix-ld = {
+              enable = true;
+              package = nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nix-ld-rs;
+            };
+          })
+        ];
+      };
+    };
+}
