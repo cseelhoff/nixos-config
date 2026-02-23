@@ -20,9 +20,7 @@
 
   outputs = { self, nixpkgs, home-manager, omarchy-nix, nixos-wsl, ... }:
     let
-      system = "x86_64-linux";
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
-        system = system;
         modules = [
           ./modules/base.nix
           hostModule

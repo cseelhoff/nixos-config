@@ -7,6 +7,8 @@
     ../home/caleb.nix
   ];
 
+  home-manager.backupFileExtension = "backup";
+
   omarchy = {
     full_name = "Admin User";
     email_address = "admin@example.com";
