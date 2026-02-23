@@ -11,7 +11,7 @@
     # Custom Protons (GE is a must for max compat)
     extraCompatPackages = with pkgs; [
       proton-ge-bin
-      # Add more via flake inputs if needed (see below)
+      # Add more via flake inputs if needed
     ];
   };
 
@@ -25,17 +25,15 @@
     lutris             # Non-Steam games (Wine/Proton)
     bottles            # Wine prefix manager
     wineWowPackages.staging  # Plain Wine (staging = good balance)
-    # p7zip unzip unrar  # From your earlier archivers
+    # p7zip unzip unrar  # From your earlier archivers, if you want them here
   ];
 
   # Unfree for NVIDIA/Steam blobs
   nixpkgs.config.allowUnfree = true;
 
-  # Extra NVIDIA tweaks for gaming (builds on your host config)
-  hardware.opengl = {
+  # Modern graphics config (matches your host's NVIDIA setup)
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
+    enable32Bit = true;  # Already set in host, but redundant OK here or remove if duplicate
   };
 }
-

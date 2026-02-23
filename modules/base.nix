@@ -36,6 +36,8 @@
     vscode
     cudatoolkit
     cudaPackages.cudnn
+    drm_info
+    _7zz
   ];
 
   hardware.graphics.enable = true;
@@ -68,16 +70,16 @@
   virtualisation.docker.enable = lib.mkForce false;
 
   users.defaultUserShell = pkgs.zsh;
-  users.users = {
-    admin = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+  users.users =
+    let
+      mkUser = {
+        isNormalUser = true;
+        extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+      };
+    in {
+      admin = mkUser;
+      caleb = mkUser;
     };
-    caleb = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
-    };
-  };
 
   system.stateVersion = "25.11";
 }
