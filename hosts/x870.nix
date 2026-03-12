@@ -3,7 +3,7 @@
 let
   edidFile = pkgs.runCommand "modified-edid" {
     name = "modified-edid";
-    src = ../../firmware/edid/modified_edid.bin;   # ← adjusted path
+    src = ../firmware/edid/modified_edid.bin;
   } ''
     mkdir -p $out/lib/firmware/edid
     cp $src $out/lib/firmware/edid/modified_edid.bin
