@@ -22,8 +22,7 @@
   networking.networkmanager.enable = true;
   time.timeZone = "America/Chicago";
 
-  # === LG C2 OLED EDID FORCE-RGB FIX (this is the important part) ===
-  # This makes the custom EDID available in the initrd so it loads from GRUB onward
+  # === LG C2 OLED EDID FORCE-RGB FIX (kernel part you already have) ===
   hardware.display.edid.packages = [
     (pkgs.runCommand "lg-c2-forced-rgb" {} ''
       mkdir -p $out/lib/firmware/edid
@@ -44,17 +43,34 @@
   services.xserver = {
     enable = true;
     videoDrivers = [ "nvidia" ];
+
+    # Force NVIDIA X11 driver to use RGB Full range with custom EDID
+    deviceSection = ''
+      Option "CustomEDID" "HDMI-0:/run/current-system/firmware/edid/modified_edid.bin"
+      Option "ColorRange" "Full"
+      Option "ColorFormat" "RGB"
+      Option "UseEdid" "TRUE"
+      Option "ModeValidation" "AllowNonEdidModes"
+    '';
+
+    screenSection = ''
+      Option "ColorSpace" "RGB"
+      Option "ColorRange" "Full"
+    '';
   };
 
   # SDDM display manager (offers Wayland / X11 session selection at login)
   services.displayManager.sddm = {
     enable = true;
-    wayland.enable = true;
+    wayland.enable = false;
   };
 
-  # Desktop environments with X11 session support
+  # Desktop environments
   services.desktopManager.plasma6.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
+
+  # Force GNOME to X11 — NVIDIA Wayland ignores RGB/color overrides
+  services.xserver.displayManager.gdm.wayland = false;
 
   # Resolve conflict between Plasma 6 (ksshaskpass) and GNOME (seahorse)
   programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";

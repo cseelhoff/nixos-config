@@ -7,7 +7,7 @@
     ../home/caleb.nix
   ];
 
-  home-manager.backupFileExtension = "backup";
+  home-manager.backupFileExtension = "hm-backup";
 
   omarchy = {
     full_name = "Admin User";
