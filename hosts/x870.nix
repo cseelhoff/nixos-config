@@ -1,15 +1,13 @@
-{ config, pkgs, self, ... }:  # ← Add self here (now available via specialArgs)
+{ config, pkgs, self, ... }:
 
 let
-  # Copy the EDID file into the Nix store and reference it
-  edidPath = self + /edid/modified_edid.bin;
-
   edidFile = pkgs.runCommand "modified-edid" {
     name = "modified-edid";
+    src = self + /edid/modified_edid.bin;
     neededForBoot = true;
   } ''
     mkdir -p $out/lib/firmware/edid
-    cp ${edidPath} $out/lib/firmware/edid/modified_edid.bin
+    cp $src $out/lib/firmware/edid/modified_edid.bin
   '';
 in {
   imports = [
@@ -54,6 +52,5 @@ in {
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 
-  # Custom EDID in firmware (early loading via neededForBoot)
   hardware.firmware = [ edidFile ];
 }
