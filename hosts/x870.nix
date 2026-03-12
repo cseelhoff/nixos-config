@@ -3,7 +3,10 @@
 let
   edidFile = pkgs.runCommand "modified-edid" {
     name = "modified-edid";
-    src = self + /edid/modified_edid.bin;
+    src = builtins.path {
+      path = ../../edid/modified_edid.bin;
+      name = "modified_edid.bin";
+    };
     neededForBoot = true;
   } ''
     mkdir -p $out/lib/firmware/edid
