@@ -1,49 +1,56 @@
 #!/usr/bin/env python3
-"""Patch LG C2 EDID to force RGB 4:4:4 by removing deep color and 4:2:0 flags."""
-
-import sys
+"""Patch LG C2 EDID to force RGB 4:4:4 by fixing ALL color capability flags."""
 
 with open("/home/caleb/nixos-config/firmware/edid/modified_edid.bin.orig", "rb") as f:
     data = bytearray(f.read())
 
 print(f"EDID size: {len(data)} bytes")
 
-# --- Block 1 CTA header (offset 0x83) ---
-print(f"\nCTA flags byte [0x83]: 0x{data[0x83]:02X}")
-print(f"  YCbCr 4:4:4 (bit 5): {(data[0x83] >> 5) & 1}")
-print(f"  YCbCr 4:2:2 (bit 4): {(data[0x83] >> 4) & 1}")
-# Already 0, but force clear just in case
-data[0x83] = data[0x83] & ~0x30
-print(f"  After clear: 0x{data[0x83]:02X}")
+# === FIX 1: Base block features byte (0x18) ===
+# Bits 4-3 = display color type: 0=RGB only, 1=RGB+YCbCr444, 2=RGB+YCbCr422, 3=both
+print(f"\n[FIX 1] Base features byte [0x18]: 0x{data[0x18]:02X} (color type = {(data[0x18]>>3)&3})")
+data[0x18] = data[0x18] & ~0x18  # Clear bits 4-3 -> RGB only
+print(f"  After: 0x{data[0x18]:02X} (color type = {(data[0x18]>>3)&3})")
 
-# --- HDMI 1.4 VSDB Deep Color byte (offset 0xA6) ---
-# VSDB starts at 0xA0, OUI is bytes 1-3, deep color is byte 6 (0xA0+6=0xA6)
-dc_byte = 0xA6
-print(f"\nHDMI 1.4 VSDB Deep Color byte [0x{dc_byte:02X}]: 0x{data[dc_byte]:02X}")
-print(f"  DC_36bit: {(data[dc_byte] >> 6) & 1}")
-print(f"  DC_30bit: {(data[dc_byte] >> 5) & 1}")
-print(f"  DC_Y444:  {(data[dc_byte] >> 3) & 1}")
-# Clear all deep color bits (bits 3-6): keep only non-DC bits
-data[dc_byte] = data[dc_byte] & ~0x78  # Clear bits 3,4,5,6
-print(f"  After clear: 0x{data[dc_byte]:02X}")
+# Recalculate Block 0 checksum
+block0_sum = sum(data[0:127]) % 256
+data[127] = (256 - block0_sum) % 256
+print(f"  Block 0 checksum: 0x{data[127]:02X}")
 
-# --- HDMI Forum VSDB 4:2:0 flags ---
-# HDMI Forum VSDB starts at 0xAF, byte[6] is at 0xAF+1+6 = 0xB6
-hf_flags = 0xB6
-print(f"\nHDMI Forum VSDB byte[6] [0x{hf_flags:02X}]: 0x{data[hf_flags]:02X}")
-print(f"  DC_4:2:0_48bit (bit 2): {(data[hf_flags] >> 2) & 1}")
-print(f"  DC_4:2:0_36bit (bit 1): {(data[hf_flags] >> 1) & 1}")
-print(f"  DC_4:2:0_30bit (bit 0): {(data[hf_flags] >> 0) & 1}")
-data[hf_flags] = data[hf_flags] & ~0x07  # Clear bits 0-2
-print(f"  After clear: 0x{data[hf_flags]:02X}")
+# === FIX 2: CTA flags byte (0x83) - clear YCbCr support ===
+print(f"\n[FIX 2] CTA flags byte [0x83]: 0x{data[0x83]:02X}")
+data[0x83] = data[0x83] & ~0x30  # Clear YCbCr 4:4:4 (bit5) and 4:2:2 (bit4)
+print(f"  After: 0x{data[0x83]:02X}")
 
-# --- Recalculate checksum for Block 1 ---
+# === FIX 3: HDMI 1.4 VSDB Deep Color byte (0xA6) ===
+print(f"\n[FIX 3] HDMI 1.4 VSDB DC byte [0xA6]: 0x{data[0xA6]:02X}")
+data[0xA6] = data[0xA6] & ~0x78  # Clear DC_48, DC_36, DC_30, DC_Y444
+print(f"  After: 0x{data[0xA6]:02X}")
+
+# === FIX 4: HDMI 1.4 VSDB Max TMDS clock (0xA7) ===
+# Currently 68 (340 MHz) - too low for 4K@60 RGB!
+# 4K@60 RGB 8-bit needs 594 MHz. Set to 119 (595 MHz).
+print(f"\n[FIX 4] HDMI 1.4 Max TMDS [0xA7]: {data[0xA7]} ({data[0xA7]*5} MHz)")
+data[0xA7] = 119  # 119 * 5 = 595 MHz
+print(f"  After: {data[0xA7]} ({data[0xA7]*5} MHz)")
+
+# === FIX 5: HDMI Forum VSDB 4:2:0 flags (0xB6) ===
+print(f"\n[FIX 5] HDMI Forum VSDB flags [0xB6]: 0x{data[0xB6]:02X}")
+data[0xB6] = data[0xB6] & ~0x07  # Clear DC 4:2:0 bits
+print(f"  After: 0x{data[0xB6]:02X}")
+
+# === Recalculate Block 1 checksum ===
 block1_sum = sum(data[128:255]) % 256
-new_checksum = (256 - block1_sum) % 256
-print(f"\nBlock 1 checksum: 0x{data[255]:02X} -> 0x{new_checksum:02X}")
-data[255] = new_checksum
+data[255] = (256 - block1_sum) % 256
+print(f"\nBlock 1 checksum: 0x{data[255]:02X}")
 
 with open("/home/caleb/nixos-config/firmware/edid/modified_edid.bin", "wb") as f:
     f.write(data)
 
-print("\nEDID patched and saved!")
+print("\n=== EDID patched successfully! ===")
+print("Key changes:")
+print("  - Base block: RGB only (was RGB+YCbCr444)")
+print("  - HDMI 1.4 VSDB: Max TMDS 595 MHz (was 340 MHz)")
+print("  - HDMI 1.4 VSDB: Deep color flags cleared")
+print("  - HDMI Forum VSDB: 4:2:0 deep color flags cleared")
+print("  - CTA: YCbCr flags confirmed cleared")
