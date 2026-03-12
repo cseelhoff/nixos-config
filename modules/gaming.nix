@@ -48,4 +48,5 @@
     enable = true;
     enable32Bit = true;  # Already set in host, but redundant OK here or remove if duplicate
   };
+
 }

@@ -26,7 +26,9 @@
           hostModule
           { networking.hostName = hostName; }
         ];
-        specialArgs = { inherit home-manager omarchy-nix nixos-wsl; };
+        specialArgs = {
+          inherit self home-manager omarchy-nix nixos-wsl;
+        };
       };
     in {
       nixosConfigurations = {
