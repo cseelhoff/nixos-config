@@ -1,14 +1,6 @@
-{ config, pkgs, lib, self, ... }:
+{ config, pkgs, lib, ... }:
 
-let
-  edidFile = pkgs.runCommand "modified-edid" {
-    name = "modified-edid";
-    src = ../firmware/edid/modified_edid.bin;
-  } ''
-    mkdir -p $out/lib/firmware/edid
-    cp $src $out/lib/firmware/edid/modified_edid.bin
-  '';
-in {
+{
   imports = [
     ../hardware/x870-hardware-configuration.nix
     ../modules/gaming.nix
@@ -29,6 +21,15 @@ in {
 
   networking.networkmanager.enable = true;
   time.timeZone = "America/Chicago";
+
+  # === LG C2 OLED EDID FORCE-RGB FIX (this is the important part) ===
+  # This makes the custom EDID available in the initrd so it loads from GRUB onward
+  hardware.display.edid.packages = [
+    (pkgs.runCommand "lg-c2-forced-rgb" {} ''
+      mkdir -p $out/lib/firmware/edid
+      cp ${../firmware/edid/modified_edid.bin} $out/lib/firmware/edid/modified_edid.bin
+    '')
+  ];
 
   boot.kernelParams = [
     "drm.edid_firmware=HDMI-A-2:edid/modified_edid.bin"
@@ -69,6 +70,4 @@ in {
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
-
-  hardware.firmware = [ edidFile ];
 }
