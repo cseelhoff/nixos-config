@@ -1,4 +1,4 @@
-{ config, pkgs, self, ... }:
+{ config, pkgs, lib, self, ... }:
 
 let
   edidFile = pkgs.runCommand "modified-edid" {
@@ -37,7 +37,26 @@ in {
     "nvidia_drm.fbdev=1"
   ];
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # Disable omarchy's greetd (hardcoded to Hyprland) so SDDM can manage sessions
+  services.greetd.enable = lib.mkForce false;
+
+  services.xserver = {
+    enable = true;
+    videoDrivers = [ "nvidia" ];
+  };
+
+  # SDDM display manager (offers Wayland / X11 session selection at login)
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = true;
+  };
+
+  # Desktop environments with X11 session support
+  services.desktopManager.plasma6.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  # Resolve conflict between Plasma 6 (ksshaskpass) and GNOME (seahorse)
+  programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
 
   hardware.graphics = {
     enable = true;
