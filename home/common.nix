@@ -1,31 +1,5 @@
 { lib, ... }:
 {
-  # Override omarchy's base16 color scheme with the Midnight theme palette
-  # https://github.com/JaxonWright/omarchy-midnight-theme
-  colorScheme = lib.mkForce {
-    slug = "vintage-light";
-    name = "Vintage-light";
-    author = "Caleb Seelhoff";
-    palette = {
-      base00 = "020202"; # background / black
-      base01 = "555555"; # lighter background (brightBlack)
-      base02 = "FFFFFF"; # selection background
-      base03 = "555555"; # comments / muted (brightBlack)
-      base04 = "C0C0C0"; # dark foreground (white/foreground)
-      base05 = "C0C0C0"; # main foreground
-      base06 = "C0C0C0"; # light foreground
-      base07 = "FFFFFF"; # brightest white
-      base08 = "E00000"; # red
-      base09 = "FF8080"; # bright red (orange slot)
-      base0A = "C0C000"; # yellow
-      base0B = "00C000"; # green
-      base0C = "00C0C0"; # cyan
-      base0D = "0000FF"; # blue
-      base0E = "C000C0"; # purple
-      base0F = "C0C000"; # yellow (dark accent)
-    };
-  };
-
   programs = {
     bat.enable = true;
     eza = { enable = true; enableZshIntegration = true; git = true; };

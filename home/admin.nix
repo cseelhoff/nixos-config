@@ -1,4 +1,4 @@
-{ pkgs, omarchy-nix, ... }:
+{ pkgs, ... }:
 {
   home-manager = {
     useGlobalPkgs = true;
@@ -7,7 +7,6 @@
     users.admin = {
       imports = [
         ./common.nix
-        omarchy-nix.homeManagerModules.default
       ];
     };
   };

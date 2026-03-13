@@ -19,62 +19,49 @@
     grub.enable = false;
   };
 
-  networking.networkmanager.enable = true;
-  time.timeZone = "America/Chicago";
-
-  # === LG C2 OLED EDID FORCE-RGB FIX (kernel part you already have) ===
-  hardware.display.edid.packages = [
-    (pkgs.runCommand "lg-c2-forced-rgb" {} ''
-      mkdir -p $out/lib/firmware/edid
-      cp ${../firmware/edid/modified_edid.bin} $out/lib/firmware/edid/modified_edid.bin
-    '')
-  ];
-
   boot.kernelParams = [
-    "drm.edid_firmware=HDMI-A-2:edid/modified_edid.bin"
-    "video=HDMI-A-2:3840x2160@60,e"
     "nvidia_drm.modeset=1"
     "nvidia_drm.fbdev=1"
   ];
 
-  # Disable omarchy's greetd (hardcoded to Hyprland) so SDDM can manage sessions
-  services.greetd.enable = lib.mkForce false;
+  networking.networkmanager.enable = true;
+  time.timeZone = "America/Chicago";
 
-  services.xserver = {
+  # --- Display manager: GDM (supports GNOME, Hyprland, and gamescope sessions) ---
+  services.xserver.enable = true;
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  services.displayManager.gdm = {
     enable = true;
-    videoDrivers = [ "nvidia" ];
-
-    # Force NVIDIA X11 driver to use RGB Full range with custom EDID
-    deviceSection = ''
-      Option "CustomEDID" "HDMI-0:/run/current-system/firmware/edid/modified_edid.bin"
-      Option "ColorRange" "Full"
-      Option "ColorFormat" "RGB"
-      Option "UseEdid" "TRUE"
-      Option "ModeValidation" "AllowNonEdidModes"
-    '';
-
-    screenSection = ''
-      Option "ColorSpace" "RGB"
-      Option "ColorRange" "Full"
-    '';
+    wayland = true;
   };
 
-  # SDDM display manager (offers Wayland / X11 session selection at login)
-  services.displayManager.sddm = {
+  # --- Desktop environments / compositors ---
+  services.desktopManager.gnome.enable = true;
+
+  programs.hyprland = {
     enable = true;
-    wayland.enable = false;
+    xwayland.enable = true;
   };
 
-  # Desktop environments
-  services.desktopManager.plasma6.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
+  # --- Hyprland / Wayland helpers ---
+  environment.systemPackages = with pkgs; [
+    ghostty            # default Hyprland terminal (configured in home/common.nix)
+    wofi               # app launcher
+    waybar             # status bar
+    mako               # notification daemon
+    grim               # screenshot
+    slurp              # region select
+    wl-clipboard       # clipboard
+    xdg-desktop-portal-hyprland
+  ];
 
-  # Force GNOME to X11 — NVIDIA Wayland ignores RGB/color overrides
-  services.xserver.displayManager.gdm.wayland = false;
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
 
-  # Resolve conflict between Plasma 6 (ksshaskpass) and GNOME (seahorse)
-  programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
-
+  # --- NVIDIA (minimal gaming config) ---
   hardware.graphics = {
     enable = true;
     enable32Bit = true;

@@ -1,9 +1,8 @@
-{ pkgs, omarchy-nix, ... }:
+{ pkgs, ... }:
 {
   home-manager.users.caleb = {
     imports = [
       ./common.nix
-      omarchy-nix.homeManagerModules.default
     ];
   };
 }

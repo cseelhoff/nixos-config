@@ -1,5 +1,5 @@
 {
-  description = "NixOS config with Omarchy (desktop) + WSL + x870 (refactored)";
+  description = "NixOS config — x870 (GNOME + Hyprland + Gaming) + WSL";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
@@ -7,18 +7,13 @@
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    omarchy-nix = {
-      url = "github:henrysipp/omarchy-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, omarchy-nix, nixos-wsl, ... }:
+  outputs = { self, nixpkgs, home-manager, nixos-wsl, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -27,7 +22,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager omarchy-nix nixos-wsl;
+          inherit self home-manager nixos-wsl;
         };
       };
     in {

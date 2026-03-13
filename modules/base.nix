@@ -1,19 +1,12 @@
-{ pkgs, lib, home-manager, omarchy-nix, ... }:
+{ pkgs, lib, home-manager, ... }:
 {
   imports = [
     home-manager.nixosModules.home-manager
-    omarchy-nix.nixosModules.default
     ../home/admin.nix
     ../home/caleb.nix
   ];
 
   home-manager.backupFileExtension = "hm-backup";
-
-  omarchy = {
-    full_name = "Admin User";
-    email_address = "admin@example.com";
-    theme = "tokyo-night";
-  };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
