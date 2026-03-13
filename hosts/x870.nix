@@ -46,15 +46,23 @@
 
   # --- Hyprland / Wayland helpers ---
   environment.systemPackages = with pkgs; [
-    ghostty            # default Hyprland terminal (configured in home/common.nix)
-    wofi               # app launcher
+    ghostty            # terminal (configured in home/common.nix)
+    fuzzel             # app launcher (Super+Space)
     waybar             # status bar
     mako               # notification daemon
     grim               # screenshot
     slurp              # region select
     wl-clipboard       # clipboard
     xdg-desktop-portal-hyprland
+    networkmanagerapplet # nm-applet for waybar tray
+    blueman            # bluetooth manager
+    pavucontrol        # audio mixer
+    playerctl          # media key control
   ];
+
+  # --- Bluetooth ---
+  hardware.bluetooth.enable = true;
+  services.blueman.enable = true;
 
   xdg.portal = {
     enable = true;
