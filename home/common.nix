@@ -1,5 +1,18 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, config, ... }:
+let
+  fuzzel-power-menu = pkgs.writeShellScriptBin "fuzzel-power-menu" ''
+    choice=$(printf "Lock\nLogout\nRestart\nShutdown" | fuzzel --dmenu --prompt "Power ❯ " --width 20 --lines 4)
+    case "$choice" in
+      Lock)     hyprlock ;;
+      Logout)   hyprctl dispatch exit ;;
+      Restart)  systemctl reboot ;;
+      Shutdown) systemctl poweroff ;;
+    esac
+  '';
+in
 {
+  home.packages = [ fuzzel-power-menu ];
+
   home.pointerCursor = {
     name = "Adwaita";
     package = pkgs.adwaita-icon-theme;
@@ -12,14 +25,25 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Adwaita-dark";
-      package = pkgs.gnome-themes-extra;
+      name = "Materia-dark";
+      package = pkgs.materia-theme;
+    };
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
     };
   };
 
   dconf.settings."org/gnome/desktop/interface" = {
     color-scheme = "prefer-dark";
   };
+
+  # Portal config: route Settings interface to gtk backend under Hyprland
+  xdg.configFile."xdg-desktop-portal/portals.conf".text = ''
+    [preferred]
+    default=hyprland;gtk
+    org.freedesktop.impl.portal.Settings=gtk
+  '';
 
   programs = {
     bat.enable = true;
@@ -67,7 +91,7 @@
       };
       settings = {
         theme = "vintage-light";
-        minimum-contrast = 2;  # or 3 for stronger boost
+        #minimum-contrast = 2;  # or 3 for stronger boost
       };
     };
   };
@@ -83,46 +107,49 @@
       env = [
         "GBM_BACKEND,nvidia-drm"
         "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-        "WLR_NO_HARDWARE_CURSORS,1"
         "XCURSOR_SIZE,24"
       ];
 
       # ── Monitor (auto-detect; override if needed) ──
-      monitor = [ ",preferred,auto,1" ];
+      #monitor = [ ",preferred,auto,1" ];
 
       # ── Input ──
       input = {
         follow_mouse = 1;
-        mouse_refocus = false;
+        #mouse_refocus = false;
         sensitivity = 0;           # no acceleration
         accel_profile = "flat";
+      };
+
+      cursor = {
+        no_hardware_cursors = false;   # let HW cursor plane clear GDM ghost
+        #inactive_timeout = 0;
       };
 
       # ── Look & feel (dark, understated) ──
       general = {
         gaps_in = 4;
         gaps_out = 8;
-        border_size = 2;
-        "col.active_border" = "rgb(6699cc)";      # muted blue
-        "col.inactive_border" = "rgb(333333)";     # dark grey
-        layout = "dwindle";
+        #border_size = 2;
+        #"col.active_border" = "rgb(6699cc)";      # muted blue
+        #"col.inactive_border" = "rgb(333333)";     # dark grey
+        #layout = "dwindle";
       };
 
-      decoration = {
-        rounding = 6;
-        blur.enabled = false;
-        shadow.enabled = false;
-      };
+      #decoration = {
+      #  rounding = 6;
+      #  blur.enabled = false;
+      #  shadow.enabled = false;
+      #};
 
       animations.enabled = false;
 
-      dwindle.preserve_split = true;
+      #dwindle.preserve_split = true;
 
       misc = {
-        force_default_wallpaper = 0;    # no anime girl
-        disable_hyprland_logo = true;
+        force_default_wallpaper = 1;
+        disable_splash_rendering = true;
         middle_click_paste = false;
-        mouse_move_enables_dpms = false;
       };
 
       # ── Keybinds ──
@@ -133,7 +160,7 @@
         # ── Launch ──
         "$mod, Return, exec, ghostty"
         "$mod, Space,  exec, fuzzel"
-        "$mod, E,      exec, nautilus"             # file manager (GNOME)
+        "$mod, E,      exec, thunar"              # file manager
 
         # ── Window management ──
         "$mod, Q,      killactive,"
@@ -180,7 +207,7 @@
         ", XF86AudioPrev,  exec, playerctl previous"
 
         # ── Session ──
-        "$mod, L,      exec, loginctl lock-session" # lock screen
+        "$mod, L,      exec, hyprlock"              # lock screen
         "$mod SHIFT, E, exit,"                     # logout to GDM
       ];
 
@@ -198,12 +225,42 @@
 
       # ── Autostart ──
       exec-once = [
-        "hyprctl setcursor Adwaita 24"     # reset cursor from GDM
+        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
+        "sleep 1 && systemctl --user restart xdg-desktop-portal.service"  # reload portals with new config
+        "sleep 0.3 && hyprctl dispatch movecursor 0 0"  # warp cursor to clear GDM ghost
         "waybar"
         "mako"
         "nm-applet --indicator"            # NetworkManager tray icon
         "blueman-applet"                   # Bluetooth tray icon
       ];
+    };
+  };
+
+  # ---------------------------------------------------------------------------
+  # Hyprlock – lock screen
+  # ---------------------------------------------------------------------------
+  programs.hyprlock = {
+    enable = true;
+    settings = {
+      general = {
+        grace = 10;           # seconds before actually locking after idle
+      };
+      input-field = [{
+        outer_color = "rgb(6699cc)";
+        inner_color = "rgb(333333)";
+        font_color = "rgb(cccccc)";
+        fade_on_empty = false;
+        position = "0, -20";
+      }];
+      label = [{
+        text = "$TIME";
+        color = "rgb(cccccc)";
+        font_size = 64;
+        font_family = "Hack Nerd Font";
+        position = "0, 80";
+        halign = "center";
+        valign = "center";
+      }];
     };
   };
 
@@ -254,7 +311,7 @@
 
       modules-left   = [ "hyprland/workspaces" "hyprland/window" ];
       modules-center = [ "clock" ];
-      modules-right  = [ "tray" "pulseaudio" "network" "bluetooth" "battery" ];
+      modules-right  = [ "tray" "pulseaudio" "network" "bluetooth" "custom/power" ];
 
       "hyprland/workspaces" = {
         format = "{id}";
@@ -301,13 +358,10 @@
         spacing = 8;
       };
 
-      battery = {
-        format = "{icon} {capacity}%";
-        format-icons = [ "󰁺" "󰁼" "󰁾" "󰂀" "󰂂" "󰁹" ];
-        states = {
-          warning = 30;
-          critical = 15;
-        };
+      "custom/power" = {
+        format = "  ${config.home.username}";
+        tooltip = false;
+        on-click = "fuzzel-power-menu";
       };
     }];
 
@@ -330,8 +384,12 @@
         color: #ffffff;
         border-bottom: 2px solid #6699cc;
       }
-      #clock, #pulseaudio, #network, #bluetooth, #battery, #tray {
+      #clock, #pulseaudio, #network, #bluetooth, #tray {
         padding: 0 10px;
+      }
+      #custom-power {
+        padding: 0 10px;
+        color: #6699cc;
       }
       #pulseaudio.muted {
         color: #cc6666;
