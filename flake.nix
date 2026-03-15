@@ -11,9 +11,13 @@
       url = "github:nix-community/NixOS-WSL/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    partydeck = {
+      url = "github:cseelhoff/partydeck";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, nixos-wsl, ... }:
+  outputs = { self, nixpkgs, home-manager, nixos-wsl, partydeck, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -22,7 +26,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager nixos-wsl;
+          inherit self home-manager nixos-wsl partydeck;
         };
       };
     in {

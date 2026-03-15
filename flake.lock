@@ -75,11 +75,32 @@
         "type": "github"
       }
     },
+    "partydeck": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773549857,
+        "narHash": "sha256-+Y4/9+GNDVex3nVd975f6rgYsKIXkyzctnSxsXSsVP8=",
+        "owner": "cseelhoff",
+        "repo": "partydeck",
+        "rev": "a21ffbba42020d4b386f3b6b87b415c39d4730d8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cseelhoff",
+        "repo": "partydeck",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nixos-wsl": "nixos-wsl",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "partydeck": "partydeck"
       }
     }
   },

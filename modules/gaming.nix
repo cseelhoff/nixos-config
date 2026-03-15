@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, partydeck, ... }:
 
 {
   # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
@@ -55,5 +55,6 @@
     wineWowPackages.staging
     bubblewrap         # PartyDeck: sandboxing for controller isolation
     fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
+    partydeck.packages.x86_64-linux.default  # PartyDeck splitscreen launcher
   ];
 }
