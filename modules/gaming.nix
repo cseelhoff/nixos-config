@@ -1,6 +1,13 @@
 { config, pkgs, ... }:
 
 {
+  # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
+  networking.firewall.allowedUDPPorts = [ 47584 ];
+  networking.firewall.allowedTCPPorts = [ 47584 ];
+
+  # KDE Plasma 6 – required for PartyDeck splitscreen tiling (KWin script)
+  services.desktopManager.plasma6.enable = true;
+
   # Steam + Proton
   programs.steam = {
     enable = true;
@@ -46,5 +53,7 @@
     lutris
     bottles
     wineWowPackages.staging
+    bubblewrap         # PartyDeck: sandboxing for controller isolation
+    fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
   ];
 }

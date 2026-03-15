@@ -1,6 +1,9 @@
 { config, pkgs, ... }:
 {
-  imports = [ ../hardware/desktop-hardware-configuration.nix ];
+  imports = [
+    ../hardware/desktop-hardware-configuration.nix
+    ../modules/desktop.nix
+  ];
 
   boot.loader = {
     systemd-boot = { enable = true; configurationLimit = 10; editor = false; };

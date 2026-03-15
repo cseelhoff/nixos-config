@@ -3,6 +3,7 @@
 {
   imports = [
     ../hardware/x870-hardware-configuration.nix
+    ../modules/desktop.nix
     ../modules/gaming.nix
   ];
 
@@ -42,51 +43,12 @@
     xwayland.enable = true;
   };
 
-  # KDE Plasma 6 – required for PartyDeck splitscreen tiling (KWin script)
-  services.desktopManager.plasma6.enable = true;
-
-  # --- File manager: Thunar ---
-  programs.thunar = {
-    enable = true;
-    plugins = with pkgs.xfce; [
-      thunar-archive-plugin
-      thunar-volman
-      thunar-media-tags-plugin
-    ];
-  };
-
-  services.gvfs.enable = true;     # trash, remote mounts, MTP
-  services.tumbler.enable = true;  # thumbnail generation
-
   # --- Hyprland / Wayland helpers ---
   environment.systemPackages = with pkgs; [
-    ghostty            # terminal (configured in home/common.nix)
-    fuzzel             # app launcher (Super+Space)
-    waybar             # status bar
-    bubblewrap         # PartyDeck: sandboxing for controller isolation
-    fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
-    mako               # notification daemon
-    grim               # screenshot
-    slurp              # region select
-    wl-clipboard       # clipboard
     xdg-desktop-portal-hyprland
-    networkmanagerapplet # nm-applet for waybar tray
-    blueman            # bluetooth manager
-    pavucontrol        # audio mixer
-    playerctl          # media key control
-    hyprlock           # lock screen (Super+L)
   ];
 
-  # --- Bluetooth ---
-  hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
-
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-  };
-
-  # --- NVIDIA (minimal gaming config) ---
+  # --- NVIDIA ---
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
