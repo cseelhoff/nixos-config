@@ -23,6 +23,7 @@
   boot.kernelParams = [
     "nvidia_drm.modeset=1"
     "nvidia_drm.fbdev=1"
+    "usbcore.autosuspend=-1"  # fix: mouse unresponsive at boot when game controllers are plugged in
   ];
 
   networking.networkmanager.enable = true;
