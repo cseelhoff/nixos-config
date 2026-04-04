@@ -20,6 +20,7 @@
 
   environment.systemPackages = with pkgs; [
     bat
+    binutils
     btop
     eza
     file
