@@ -7,6 +7,12 @@
   ];
 
   home-manager.backupFileExtension = "hm-backup";
+  home-manager.overwriteBackup = true;
+
+  # Create /bin/bash symlink for scripts with #!/bin/bash shebangs
+  system.activationScripts.binbash = ''
+    ln -sf ${pkgs.bash}/bin/bash /bin/bash
+  '';
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
@@ -16,10 +22,12 @@
     bat
     btop
     eza
+    file
     fzf
     git
     nixfmt-rfc-style
     nixpkgs-fmt
+    python3
     wget
     zoxide
     podman-compose
