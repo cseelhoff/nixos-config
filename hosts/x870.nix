@@ -29,13 +29,15 @@
   networking.networkmanager.enable = true;
   time.timeZone = "America/Chicago";
 
-  # --- Display manager: GDM (supports GNOME, Hyprland, and gamescope sessions) ---
+  # --- Display manager: SDDM (KDE's native DM; better Plasma + Wayland integration) ---
+  # Switched from GDM to SDDM because KDE Plasma is now the primary DE
+  # (PartyDeck requires KDE Plasma for KWin splitscreen tiling).
   services.xserver.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
-  services.displayManager.gdm = {
+  services.displayManager.sddm = {
     enable = true;
-    wayland = true;
+    wayland.enable = true;
   };
 
   # --- Desktop environments / compositors ---

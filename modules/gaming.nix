@@ -12,7 +12,7 @@
   programs.steam = {
     enable = true;
     gamescopeSession = {
-      enable = true;                       # GDM "Steam" Wayland session
+      enable = true;                       # SDDM "Steam" Wayland session
       args = [
         "--output-width" "3840"
         "--output-height" "2160"
