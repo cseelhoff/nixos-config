@@ -38,6 +38,7 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
+    theme = "catppuccin-mocha-blue";
   };
 
   # --- Desktop environments / compositors ---
@@ -50,6 +51,7 @@
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal-hyprland
     godot_4
+    (catppuccin-sddm.override { flavor = "mocha"; accent = "blue"; })
   ];
 
   # --- NVIDIA ---
