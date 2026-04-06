@@ -1,5 +1,21 @@
 { config, pkgs, lib, ... }:
 
+let
+  # Breeze SDDM theme with solid black background
+  sddm-breeze-black = pkgs.stdenvNoCC.mkDerivation {
+    pname = "sddm-breeze-black";
+    version = "1.0";
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/share/sddm/themes/breeze
+      cp -r ${pkgs.kdePackages.plasma-desktop}/share/sddm/themes/breeze/* $out/share/sddm/themes/breeze/
+      chmod -R u+w $out/share/sddm/themes/breeze
+      sed -i 's/type=image/type=color/' $out/share/sddm/themes/breeze/theme.conf
+      sed -i 's/color=#1d99f3/color=#000000/' $out/share/sddm/themes/breeze/theme.conf
+    '';
+  };
+in
+
 {
   imports = [
     ../hardware/x870-hardware-configuration.nix
@@ -38,7 +54,7 @@
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
-    theme = "catppuccin-mocha-blue";
+    theme = "breeze";
   };
 
   # --- Desktop environments / compositors ---
@@ -51,7 +67,7 @@
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal-hyprland
     godot_4
-    (catppuccin-sddm.override { flavor = "mocha"; accent = "blue"; })
+    sddm-breeze-black
   ];
 
   # --- NVIDIA ---
