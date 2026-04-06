@@ -49,6 +49,7 @@
   # --- Hyprland / Wayland helpers ---
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal-hyprland
+    godot_4
   ];
 
   # --- NVIDIA ---

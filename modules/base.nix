@@ -18,6 +18,26 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.cudaSupport = true;
 
+  # Overlay: bump onedriver to v0.15.0 (fixes AADSTS70000 / invalid_grant auth bug)
+  nixpkgs.overlays = [
+    (final: prev: {
+      onedriver = prev.onedriver.overrideAttrs (newAttrs: oldAttrs: {
+        version = "0.15.0";
+        src = prev.fetchFromGitHub {
+          inherit (oldAttrs.src) owner repo;
+          rev = "v${newAttrs.version}";
+          hash = "sha256-DCxF52CtA9KAP+yz5Rgzc/nUAXtZwfYAVU7oHREJlRY=";
+        };
+        vendorHash = "sha256-Ifcmf9AtZnrjgTPQnof/ap0TY19zHVftm5N4JgvbAgs=";
+        postInstall =
+          builtins.replaceStrings
+            [ "resources/onedriver.desktop" ]
+            [ "resources/onedriver-launcher.desktop" ]
+            oldAttrs.postInstall;
+      });
+    })
+  ];
+
   environment.systemPackages = with pkgs; [
     bat
     binutils
@@ -40,6 +60,7 @@
     cudaPackages.cudnn
     drm_info
     _7zz
+    obsidian
   ];
 
   hardware.graphics.enable = true;

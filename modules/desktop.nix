@@ -3,6 +3,7 @@
 {
   # --- Desktop environment helpers ---
   environment.systemPackages = with pkgs; [
+    onedriver          # OneDrive FUSE client (run onedriver-launcher for GUI)
     ghostty            # terminal (configured in home/common.nix)
     fuzzel             # app launcher (Super+Space)
     waybar             # status bar
