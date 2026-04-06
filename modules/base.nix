@@ -20,6 +20,15 @@
 
   # Overlay: bump onedriver to v0.15.0 (fixes AADSTS70000 / invalid_grant auth bug)
   nixpkgs.overlays = [
+    # Fix Godot TLS: nixpkgs build omits system_certs_path, causing
+    # "Cannot open X509CertificateMbedTLS file 'False'" on NixOS
+    (final: prev: {
+      godot_4 = prev.godot_4.overrideAttrs (old: {
+        sconsFlags = (old.sconsFlags or []) ++ [
+          "system_certs_path=/etc/ssl/certs/ca-certificates.crt"
+        ];
+      });
+    })
     (final: prev: {
       onedriver = prev.onedriver.overrideAttrs (newAttrs: oldAttrs: {
         version = "0.15.0";

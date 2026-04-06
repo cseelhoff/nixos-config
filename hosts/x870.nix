@@ -52,9 +52,6 @@
     godot_4
   ];
 
-  # Fix Godot TLS: nixpkgs build passes "False" for the CA bundle path
-  environment.variables.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-
   # --- NVIDIA ---
   hardware.graphics = {
     enable = true;
