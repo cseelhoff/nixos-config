@@ -46,6 +46,7 @@
     file
     fzf
     git
+    jq
     nixfmt-rfc-style
     nixpkgs-fmt
     python3
