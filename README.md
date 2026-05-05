@@ -1,6 +1,13 @@
-# NixOS + Omarchy Config (Desktop + WSL Variants)
+# NixOS Config (Desktop + Gaming + WSL Variants)
 
-This is my personal declarative NixOS configuration using **flakes**, **home-manager**, and **omarchy-nix** (for Hyprland + desktop niceties).
+This is my personal declarative NixOS configuration using **flakes** and **home-manager**, with Hyprland as the Wayland compositor on graphical hosts.
+
+Tracks **`nixos-unstable`** (rolling) — chosen because most of what I run (Hyprland, NVIDIA beta driver, gamescope/Proton, latest Steam) benefits from fresher packages, and to avoid one-off overlays just to bump versions. `system.stateVersion` / `home.stateVersion` are pinned to `25.11` for data-format compatibility — do **not** bump them when updating.
+
+Update discipline:
+- `nix flake update` is a deliberate event, not a routine. Do it when you have time to fix breakage.
+- Prefer `nix flake lock --update-input nixpkgs` over a blanket update so you can bisect regressions.
+- systemd-boot keeps prior generations — use them to roll back if a rebuild misbehaves.
 
 - **desktop**: Native bare-metal/VM install — generic Wayland desktop, **no NVIDIA, no CUDA, no gaming stack**. Safe for Proxmox VMs and Intel/AMD machines.
 - **x870**: My gaming rig — `desktop` profile + NVIDIA drivers/CUDA + Steam/Proton/gamescope/PartyDeck.
@@ -11,12 +18,12 @@ This is my personal declarative NixOS configuration using **flakes**, **home-man
 ```
 modules/
   base.nix     # truly host-agnostic: shells, fonts, podman, users
-  desktop.nix  # generic Wayland desktop (Thunar, portals, bluetooth, …)
+  gui.nix      # generic graphical host (Wayland/Hyprland/Thunar/portals/…)
   nvidia.nix   # NVIDIA drivers + cudaSupport + cudatoolkit/cudnn + nvtop
   gaming.nix   # Steam/Proton/gamescope/PartyDeck (NVIDIA env auto-gated)
 hosts/
-  desktop.nix  # base + desktop
-  x870.nix     # base + desktop + nvidia + gaming
+  desktop.nix  # base + gui
+  x870.nix     # base + gui + nvidia + gaming
   wsl.nix      # base + WSL-specific CUDA env
 ```
 
@@ -27,7 +34,7 @@ Features are **explicitly opted into per host** rather than auto-detected — Ni
 Goal: Boot ISO → minimal steps → your full config → no per-machine git pushes.
 
 1. **Boot the NixOS Minimal ISO**
-   - Download latest minimal ISO: https://nixos.org/download (e.g. `nixos-25.11-minimal-x86_64-linux.iso`).
+   - Download latest minimal ISO: https://nixos.org/download (any recent release ISO works — the flake tracks `nixos-unstable` and will switch the system to it on first rebuild).
    - Boot → login as `nixos` (no password).
 
 2. **Set up networking** (if needed)
@@ -70,7 +77,7 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
    sudo git -c user.email=install@localhost -c user.name=install \
         commit -m "desktop hardware config"
 
-   sudo nixos-install --root /mnt --flake .#desktop --no-root-passwd
+   sudo nixos-install --root /mnt --flake .#desktop
    ```
    - This:
      - Clones your repo to the target (`/mnt/etc/nixos` – writable!).
@@ -79,7 +86,7 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
      - Commits it locally so the flake can see it (otherwise eval fails with `nixpkgs.hostPlatform not set`).
      - Installs from the **local flake path** (`--flake .#desktop`).
    - Use `#wsl` instead of `#desktop` for WSL bootstrap (after initial WSL tar install). For WSL, rename to `hardware/wsl-hardware-configuration.nix`.
-   - `--no-root-passwd` skips the interactive root password prompt at the end of install. Make sure your flake sets `users.users.admin.initialPassword` (or `initialHashedPassword`); otherwise log in as root via single-user mode and run `passwd admin` after first boot.
+   - You may use `sudo nixos-install --root /mnt --flake .#desktop --no-root-passwd` if you wish to skip interactive root password prompt at the end of install. Make sure your flake sets `users.users.admin.initialPassword` (or `initialHashedPassword`); otherwise log in as root via single-user mode and run `passwd admin` after first boot.
 
 5. **Reboot**
    ```bash

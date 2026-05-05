@@ -19,7 +19,7 @@ in
 {
   imports = [
     ../hardware/x870-hardware-configuration.nix
-    ../modules/desktop.nix
+    ../modules/gui.nix
     ../modules/nvidia.nix
     ../modules/gaming.nix
   ];
@@ -66,7 +66,6 @@ in
   # --- Hyprland / Wayland helpers ---
   environment.systemPackages = with pkgs; [
     xdg-desktop-portal-hyprland
-    godot_4
     sddm-breeze-black
   ];
 

@@ -5,6 +5,8 @@
       ./common.nix
     ];
 
+    home.packages = [ pkgs.onedriver ];  # OneDrive FUSE client (run onedriver-launcher)
+
     programs.git = {
       enable = true;
       settings.user.name = "cseelhoff";

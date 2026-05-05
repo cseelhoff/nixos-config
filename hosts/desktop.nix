@@ -2,7 +2,7 @@
 {
   imports = [
     ../hardware/desktop-hardware-configuration.nix
-    ../modules/desktop.nix
+    ../modules/gui.nix
   ];
 
   boot.loader = {

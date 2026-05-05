@@ -4,6 +4,18 @@ let
   isNvidia = lib.elem "nvidia" (config.services.xserver.videoDrivers or []);
 in
 {
+  # Fix Godot TLS: nixpkgs build omits system_certs_path, causing
+  # "Cannot open X509CertificateMbedTLS file 'False'" on NixOS.
+  nixpkgs.overlays = [
+    (final: prev: {
+      godot_4 = prev.godot_4.overrideAttrs (old: {
+        sconsFlags = (old.sconsFlags or []) ++ [
+          "system_certs_path=/etc/ssl/certs/ca-certificates.crt"
+        ];
+      });
+    })
+  ];
+
   # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
   networking.firewall.allowedUDPPorts = [ 47584 ];
   networking.firewall.allowedTCPPorts = [ 47584 ];
@@ -59,5 +71,6 @@ in
     bubblewrap         # PartyDeck: sandboxing for controller isolation
     fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
     partydeck.packages.x86_64-linux.default  # PartyDeck splitscreen launcher
+    godot_4            # game engine (TLS overlay applied above)
   ];
 }
