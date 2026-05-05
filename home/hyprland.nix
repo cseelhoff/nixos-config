@@ -265,9 +265,15 @@ in
       height = 32;
       spacing = 8;
 
-      modules-left   = [ "hyprland/workspaces" "hyprland/window" ];
+      modules-left   = [ "custom/launcher" "hyprland/workspaces" "hyprland/window" ];
       modules-center = [ "clock" ];
       modules-right  = [ "tray" "pulseaudio" "network" "bluetooth" "custom/power" ];
+
+      "custom/launcher" = {
+        format = "☰";              # hamburger icon; works without nerd fonts too
+        tooltip = false;
+        on-click = "fuzzel";
+      };
 
       "hyprland/workspaces" = {
         format = "{id}";
@@ -346,6 +352,15 @@ in
       #custom-power {
         padding: 0 10px;
         color: #6699cc;
+      }
+      #custom-launcher {
+        padding: 0 14px;
+        font-size: 16px;
+        color: #6699cc;
+      }
+      #custom-launcher:hover {
+        color: #ffffff;
+        background: #333333;
       }
       #pulseaudio.muted {
         color: #cc6666;

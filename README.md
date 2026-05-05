@@ -99,7 +99,7 @@ After first boot, you're running your full declarative config. Future updates:
 ```bash
 cd /etc/nixos   # or wherever you cloned it
 git pull
-sudo nixos-rebuild switch --flake .#$(hostname)   # or #nixos-gui
+sudo nixos-rebuild switch --flake .#nixos-gui
 ```
 
 **Note on direct GitHub install** (`--flake github:...`):  
