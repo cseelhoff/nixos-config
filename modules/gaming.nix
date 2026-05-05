@@ -1,7 +1,29 @@
 { config, lib, pkgs, partydeck, ... }:
 
+# Gaming module.
+# Brings in Steam/Proton/gamescope/PartyDeck and — because PartyDeck's
+# splitscreen tiling is implemented as a KWin script — the full KDE
+# Plasma 6 desktop, SDDM (Plasma's native display manager), and a
+# tweaked Breeze SDDM theme. These KDE bits are NOT needed by any
+# other workflow on the system; they're imported transitively because
+# of this single PartyDeck dependency.
+
 let
   isNvidia = lib.elem "nvidia" (config.services.xserver.videoDrivers or []);
+
+  # Breeze SDDM theme with a solid black background.
+  sddm-breeze-black = pkgs.stdenvNoCC.mkDerivation {
+    pname = "sddm-breeze-black";
+    version = "1.0";
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/share/sddm/themes/breeze
+      cp -r ${pkgs.kdePackages.plasma-desktop}/share/sddm/themes/breeze/* $out/share/sddm/themes/breeze/
+      chmod -R u+w $out/share/sddm/themes/breeze
+      sed -i 's/type=image/type=color/' $out/share/sddm/themes/breeze/theme.conf
+      sed -i 's/color=#1d99f3/color=#000000/' $out/share/sddm/themes/breeze/theme.conf
+    '';
+  };
 in
 {
   # Fix Godot TLS: nixpkgs build omits system_certs_path, causing
@@ -16,12 +38,41 @@ in
     })
   ];
 
+  # ---------------------------------------------------------------------
+  # PartyDeck dependency chain: KDE Plasma 6 (KWin script) + SDDM theme
+  # ---------------------------------------------------------------------
+  # KDE Plasma 6 — required for PartyDeck splitscreen tiling (KWin script).
+  services.desktopManager.plasma6.enable = true;
+
+  # X server stack — Plasma uses Wayland, but several KDE tools still
+  # pull in X11 bits and SDDM-X provides fallback sessions.
+  services.xserver.enable = true;
+
+  # SDDM is Plasma's native display manager; we use it because Plasma
+  # is already in the closure for PartyDeck.
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = true;
+    theme = "breeze";
+  };
+
+  environment.systemPackages = with pkgs; [
+    sddm-breeze-black
+    gamescope
+    mangohud
+    protonup-qt
+    lutris
+    bottles
+    wineWowPackages.staging
+    bubblewrap         # PartyDeck: sandboxing for controller isolation
+    fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
+    partydeck.packages.x86_64-linux.default  # PartyDeck splitscreen launcher
+    godot_4            # game engine (TLS overlay applied above)
+  ];
+
   # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
   networking.firewall.allowedUDPPorts = [ 47584 ];
   networking.firewall.allowedTCPPorts = [ 47584 ];
-
-  # KDE Plasma 6 – required for PartyDeck splitscreen tiling (KWin script)
-  services.desktopManager.plasma6.enable = true;
 
   # Steam + Proton
   programs.steam = {
@@ -59,18 +110,4 @@ in
 
   # CPU/GPU performance boosts while gaming
   programs.gamemode.enable = true;
-
-  # Gaming tools
-  environment.systemPackages = with pkgs; [
-    gamescope
-    mangohud
-    protonup-qt
-    lutris
-    bottles
-    wineWowPackages.staging
-    bubblewrap         # PartyDeck: sandboxing for controller isolation
-    fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
-    partydeck.packages.x86_64-linux.default  # PartyDeck splitscreen launcher
-    godot_4            # game engine (TLS overlay applied above)
-  ];
 }

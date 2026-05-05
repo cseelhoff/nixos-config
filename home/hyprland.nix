@@ -83,30 +83,29 @@ in
         #inactive_timeout = 0;
       };
 
-      # ── Look & feel (dark, understated) ──
+      # ── Look & feel (dark, understated, performance-first) ──
       general = {
         gaps_in = 4;
         gaps_out = 8;
-        #border_size = 2;
-        #"col.active_border" = "rgb(6699cc)";      # muted blue
-        #"col.inactive_border" = "rgb(333333)";     # dark grey
-        #layout = "dwindle";
+        border_size = 1;
       };
 
-      #decoration = {
-      #  rounding = 6;
-      #  blur.enabled = false;
-      #  shadow.enabled = false;
-      #};
+      # All visual effects OFF — fast on low-end hardware and over
+      # Proxmox VNC where every dirty pixel costs bandwidth.
+      decoration = {
+        rounding = 0;
+        blur.enabled = false;
+        shadow.enabled = false;
+      };
 
       animations.enabled = false;
 
-      #dwindle.preserve_split = true;
-
       misc = {
-        force_default_wallpaper = 1;
+        force_default_wallpaper = 0;       # plain solid background, no Hyprland artwork
         disable_splash_rendering = true;
+        disable_hyprland_logo = true;
         middle_click_paste = false;
+        vfr = true;                        # variable refresh: don't redraw when nothing changed
       };
 
       # ── Keybinds ──

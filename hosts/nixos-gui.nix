@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 {
   imports = [
-    ../hardware/desktop-hardware-configuration.nix
+    ../hardware/nixos-gui-hardware-configuration.nix
     ../modules/gui.nix
   ];
 

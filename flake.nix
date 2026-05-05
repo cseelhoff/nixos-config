@@ -31,7 +31,7 @@
       };
     in {
       nixosConfigurations = {
-        desktop = mkNixos "desktop" ./hosts/desktop.nix;
+        nixos-gui = mkNixos "nixos-gui" ./hosts/nixos-gui.nix;
         x870 = mkNixos "x870" ./hosts/x870.nix;
         wsl = mkNixos "wsl" ./hosts/wsl.nix;
       };

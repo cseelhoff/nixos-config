@@ -1,33 +1,26 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
+
+# GUI host module: lightweight Hyprland desktop.
+#
+# Provides graphics stack, fonts, GUI apps, file manager, bluetooth,
+# the Hyprland Wayland compositor + ecosystem (waybar/fuzzel/mako/grim/
+# slurp/hyprlock/wl-clipboard/playerctl), and a minimal greetd display
+# manager.
+#
+# Display manager note: hosts that also import modules/gaming.nix will
+# get KDE/SDDM from there instead — the greetd config below is
+# automatically suppressed when SDDM is enabled (see lib.mkIf).
+#
+# Effects (blur, shadows, rounding, animations) are disabled in
+# home/hyprland.nix so the desktop stays snappy on low-end hardware
+# and over Proxmox VNC.
 
 {
-  # --- Desktop environment helpers ---
-  # ghostty is configured via home-manager in home/hyprland.nix and
-  # installed there — no need to add it as a system package.
-  environment.systemPackages = with pkgs; [
-    fuzzel             # app launcher (Super+Space)
-    waybar             # status bar
-    mako               # notification daemon
-    grim               # screenshot
-    slurp              # region select
-    wl-clipboard       # clipboard
-    networkmanagerapplet # nm-applet for waybar tray
-    blueman            # bluetooth manager
-    pavucontrol        # audio mixer
-    playerctl          # media key control
-    hyprlock           # lock screen (Super+L)
-
-    # GUI apps (desktop-only — not needed on WSL/headless hosts)
-    brave
-    vscode
-    obsidian
-  ];
-
-  # Graphics stack — needed for any Wayland/X compositor.
-  # (NVIDIA hosts also enable enable32Bit via modules/nvidia.nix.)
+  # ---------------------------------------------------------------------
+  # Graphics, fonts, GUI apps
+  # ---------------------------------------------------------------------
   hardware.graphics.enable = true;
 
-  # Fonts only matter on hosts with a display.
   fonts.fontconfig = {
     defaultFonts.monospace = [ "Hack Nerd Font Mono" ];
     antialias = true;
@@ -37,7 +30,26 @@
   };
   fonts.packages = with pkgs; [ nerd-fonts.hack ];
 
-  # --- File manager: Thunar ---
+  environment.systemPackages = with pkgs; [
+    pavucontrol        # audio mixer
+    blueman            # bluetooth manager (GUI)
+    brave
+    vscode
+    obsidian
+
+    # Hyprland ecosystem
+    xdg-desktop-portal-hyprland
+    fuzzel             # app launcher (Super+Space)
+    waybar             # status bar
+    mako               # notification daemon
+    grim               # screenshot
+    slurp              # region select
+    wl-clipboard       # clipboard
+    networkmanagerapplet # nm-applet for waybar tray
+    playerctl          # media key control
+    hyprlock           # lock screen (Super+L)
+  ];
+
   programs.thunar = {
     enable = true;
     plugins = with pkgs.xfce; [
@@ -50,15 +62,12 @@
   services.gvfs.enable = true;     # trash, remote mounts, MTP
   services.tumbler.enable = true;  # thumbnail generation
 
-  # --- Bluetooth ---
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  # Shorten the user-level systemd stop timeout to avoid the
-  # "A stop job is running for User Manager for UID …" delay on
-  # reboot/shutdown.  Plasma Wayland services (plasmashell, kwin_wayland,
-  # kded6, etc.) sometimes hang on SIGTERM; this caps the wait at 15 s
-  # instead of the default ~90 s.
+  # Cap user-level systemd stop timeout to avoid the "A stop job is
+  # running for User Manager for UID …" delay on reboot/shutdown when
+  # heavy session services hang on SIGTERM. Default is ~90s; cap at 30s.
   systemd.user.extraConfig = ''
     DefaultTimeoutStopSec=30s
   '';
@@ -66,5 +75,28 @@
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
+
+  # ---------------------------------------------------------------------
+  # Hyprland compositor
+  # ---------------------------------------------------------------------
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
+
+  # ---------------------------------------------------------------------
+  # Display manager: greetd + tuigreet (lightweight, ~10 MB).
+  # Auto-suppressed when SDDM is enabled (modules/gaming.nix activates
+  # SDDM because KDE is its native DM).
+  # ---------------------------------------------------------------------
+  services.greetd = lib.mkIf (!config.services.displayManager.sddm.enable) {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd Hyprland";
+        user = "greeter";
+      };
+    };
   };
 }
