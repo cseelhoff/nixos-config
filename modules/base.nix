@@ -16,7 +16,9 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.cudaSupport = true;
+  # NOTE: cudaSupport intentionally NOT set here — it would force CUDA
+  # rebuilds on every host. Hosts with NVIDIA hardware should import
+  # ../modules/nvidia.nix, which enables it.
 
   # Overlay: bump onedriver to v0.15.0 (fixes AADSTS70000 / invalid_grant auth bug)
   nixpkgs.overlays = [
@@ -64,10 +66,7 @@
     podman-compose
     dnsutils
     brave
-    nvtopPackages.full
     vscode
-    cudatoolkit
-    cudaPackages.cudnn
     drm_info
     _7zz
     obsidian

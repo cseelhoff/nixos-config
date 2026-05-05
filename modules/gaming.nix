@@ -1,5 +1,8 @@
-{ config, pkgs, partydeck, ... }:
+{ config, lib, pkgs, partydeck, ... }:
 
+let
+  isNvidia = lib.elem "nvidia" (config.services.xserver.videoDrivers or []);
+in
 {
   # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
   networking.firewall.allowedUDPPorts = [ 47584 ];
@@ -22,11 +25,11 @@
         "--force-grab-cursor"
         "-e"                               # steam overlay integration
       ];
-      env = {
-        # NVIDIA Wayland compat (same as Hyprland session)
-        GBM_BACKEND            = "nvidia-drm";
+      # NVIDIA-only Wayland compat env. Empty on AMD/Intel/virtio-gpu.
+      env = lib.mkIf isNvidia {
+        GBM_BACKEND               = "nvidia-drm";
         __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-        WLR_NO_HARDWARE_CURSORS = "1";
+        WLR_NO_HARDWARE_CURSORS   = "1";
       };
     };
     remotePlay.openFirewall = true;

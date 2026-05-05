@@ -2,8 +2,25 @@
 
 This is my personal declarative NixOS configuration using **flakes**, **home-manager**, and **omarchy-nix** (for Hyprland + desktop niceties).
 
-- **desktop**: Native bare-metal/VM install (Hyprland desktop via Omarchy, systemd-boot for UEFI)
-- **wsl**: WSL2 install (with NixOS-WSL module, Podman, CUDA env, nix-ld, etc.)
+- **desktop**: Native bare-metal/VM install — generic Wayland desktop, **no NVIDIA, no CUDA, no gaming stack**. Safe for Proxmox VMs and Intel/AMD machines.
+- **x870**: My gaming rig — `desktop` profile + NVIDIA drivers/CUDA + Steam/Proton/gamescope/PartyDeck.
+- **wsl**: WSL2 install (with NixOS-WSL module, Podman, CUDA via Windows driver, nix-ld, etc.)
+
+### Module layout (host opts in to features)
+
+```
+modules/
+  base.nix     # truly host-agnostic: shells, fonts, podman, users
+  desktop.nix  # generic Wayland desktop (Thunar, portals, bluetooth, …)
+  nvidia.nix   # NVIDIA drivers + cudaSupport + cudatoolkit/cudnn + nvtop
+  gaming.nix   # Steam/Proton/gamescope/PartyDeck (NVIDIA env auto-gated)
+hosts/
+  desktop.nix  # base + desktop
+  x870.nix     # base + desktop + nvidia + gaming
+  wsl.nix      # base + WSL-specific CUDA env
+```
+
+Features are **explicitly opted into per host** rather than auto-detected — Nix evaluation is hermetic and can't reliably probe live hardware, so this stays declarative and debuggable. To add NVIDIA/CUDA to a new host, add `../modules/nvidia.nix` to its `imports`.
 
 ## Quick Install on Fresh Machine (NixOS Minimal ISO) – Cattle Style
 
@@ -42,15 +59,27 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
    sudo git clone https://github.com/cseelhoff/nixos-config.git /mnt/etc/nixos
    cd /mnt/etc/nixos
    sudo nixos-generate-config --root /mnt
-   sudo git add hardware-configuration.nix
-   sudo nixos-install --root /mnt --flake .#desktop
+
+   # The flake imports hardware/<host>-hardware-configuration.nix,
+   # so move the generated file into place (rename for the target host):
+   sudo mv /mnt/etc/nixos/hardware-configuration.nix \
+           /mnt/etc/nixos/hardware/desktop-hardware-configuration.nix
+
+   # Flakes only evaluate tracked files — stage AND commit it:
+   sudo git add hardware/desktop-hardware-configuration.nix
+   sudo git -c user.email=install@localhost -c user.name=install \
+        commit -m "desktop hardware config"
+
+   sudo nixos-install --root /mnt --flake .#desktop --no-root-passwd
    ```
    - This:
      - Clones your repo to the target (`/mnt/etc/nixos` – writable!).
      - Generates `hardware-configuration.nix` **locally** on this machine (no git push needed!).
+     - Renames it to the host-specific path your flake imports.
+     - Commits it locally so the flake can see it (otherwise eval fails with `nixpkgs.hostPlatform not set`).
      - Installs from the **local flake path** (`--flake .#desktop`).
-   - Use `#wsl` instead of `#desktop` for WSL bootstrap (after initial WSL tar install).
-   - `--no-root-passwd` skips root password (set later with `passwd`).
+   - Use `#wsl` instead of `#desktop` for WSL bootstrap (after initial WSL tar install). For WSL, rename to `hardware/wsl-hardware-configuration.nix`.
+   - `--no-root-passwd` skips the interactive root password prompt at the end of install. Make sure your flake sets `users.users.admin.initialPassword` (or `initialHashedPassword`); otherwise log in as root via single-user mode and run `passwd admin` after first boot.
 
 5. **Reboot**
    ```bash
@@ -102,7 +131,7 @@ For WSL first setup:
 
 ## Tips
 
-- **Hardware per machine**: Lives locally in `/etc/nixos/hardware-configuration.nix` — never committed unless you want a "pet" machine.
+- **Hardware per machine**: Lives locally at `/etc/nixos/hardware/<host>-hardware-configuration.nix` — committed only on the target machine's local clone, never pushed upstream unless you want a "pet" machine.
 - **Secrets**: Add sops-nix/agenix later.
 - **Rollback**: Generations in bootloader.
 - **Updates**: `nix flake update` + `--upgrade` for full upgrades.

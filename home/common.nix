@@ -1,4 +1,8 @@
-{ lib, pkgs, config, ... }:
+{ lib, pkgs, config, osConfig ? null, ... }:
+let
+  hostHasNvidia =
+    (osConfig.hardware.nvidia.modesetting.enable or false);
+in
 let
   fuzzel-power-menu = pkgs.writeShellScriptBin "fuzzel-power-menu" ''
     choice=$(printf "Lock\nLogout\nRestart\nShutdown" | fuzzel --dmenu --prompt "Power ❯ " --width 20 --lines 4)
@@ -103,12 +107,13 @@ in
     enable = true;
 
     settings = {
-      # ── NVIDIA / Wayland env ──
-      env = [
-        "GBM_BACKEND,nvidia-drm"
-        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
-        "XCURSOR_SIZE,24"
-      ];
+      # ── Wayland env ── (NVIDIA-only entries gated on host config)
+      env =
+        (lib.optionals hostHasNvidia [
+          "GBM_BACKEND,nvidia-drm"
+          "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+        ])
+        ++ [ "XCURSOR_SIZE,24" ];
 
       # ── Monitor (auto-detect; override if needed) ──
       #monitor = [ ",preferred,auto,1" ];

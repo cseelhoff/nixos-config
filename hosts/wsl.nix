@@ -2,6 +2,11 @@
 {
   imports = [ nixos-wsl.nixosModules.default ];
 
+  # WSL uses the Windows NVIDIA driver (no kernel module on the Linux side),
+  # so we enable cudaSupport + install cudatoolkit here rather than via
+  # ../modules/nvidia.nix (which assumes a Linux NVIDIA kernel driver).
+  nixpkgs.config.cudaSupport = true;
+
   wsl = {
     enable = true;
     useWindowsDriver = true;

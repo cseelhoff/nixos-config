@@ -20,6 +20,7 @@ in
   imports = [
     ../hardware/x870-hardware-configuration.nix
     ../modules/desktop.nix
+    ../modules/nvidia.nix
     ../modules/gaming.nix
   ];
 
@@ -36,9 +37,8 @@ in
     grub.enable = false;
   };
 
+  # Host-specific kernel params. NVIDIA-related params live in modules/nvidia.nix.
   boot.kernelParams = [
-    "nvidia_drm.modeset=1"
-    "nvidia_drm.fbdev=1"
     "usbcore.autosuspend=-1"  # fix: mouse unresponsive at boot when game controllers are plugged in
   ];
 
@@ -49,7 +49,7 @@ in
   # Switched from GDM to SDDM because KDE Plasma is now the primary DE
   # (PartyDeck requires KDE Plasma for KWin splitscreen tiling).
   services.xserver.enable = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # services.xserver.videoDrivers is set by ../modules/nvidia.nix
 
   services.displayManager.sddm = {
     enable = true;
@@ -70,16 +70,5 @@ in
     sddm-breeze-black
   ];
 
-  # --- NVIDIA ---
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
-  };
-
-  hardware.nvidia = {
-    modesetting.enable = true;
-    open = true;
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
-  };
+  # NVIDIA driver config moved to ../modules/nvidia.nix
 }
