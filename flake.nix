@@ -2,9 +2,14 @@
   description = "NixOS config — x870 (GNOME + Hyprland + Gaming) + WSL";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # Stable base — most packages come from here so we get Hydra cache hits.
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    # Unstable cherry-pick — used per-package via specialArgs.nixpkgs-unstable
+    # for things we want bleeding-edge (e.g. onedriver auth fixes).
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/master";
+      # Pin to the home-manager release matching our stable nixpkgs.
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-wsl = {
@@ -15,9 +20,17 @@
       url = "github:cseelhoff/partydeck";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    code-insiders = {
+      # VS Code Insiders, auto-updated daily via upstream GitHub Action.
+      # Follows unstable so it gets the freshest glibc/electron deps.
+      # Launch:  `code-insiders`  (installed in home/caleb.nix)
+      # Update:  `nix flake update code-insiders && sudo nixos-rebuild switch --flake .#<host>`
+      url = "github:iosmanthus/code-insiders-flake";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, nixos-wsl, partydeck, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, partydeck, code-insiders, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -26,7 +39,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager nixos-wsl partydeck;
+          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable;
         };
       };
     in {

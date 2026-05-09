@@ -20,6 +20,21 @@
   # rebuilds on every host. Hosts with NVIDIA hardware should import
   # ../modules/nvidia.nix, which enables it.
 
+  # Allow unfree for ad-hoc `nix run --impure nixpkgs#...` invocations.
+  # System nixpkgs.config above only affects the NixOS build, not the user's
+  # flake-based nix CLI evaluations, which read this env var when --impure.
+  environment.variables.NIXPKGS_ALLOW_UNFREE = "1";
+
+  # Disable openldap's flaky test017-syncreplication-refresh, which is
+  # timing-dependent (hardcoded `sleep 7` waits for replication) and fails
+  # intermittently on fast/loaded machines. Pulled in transitively via
+  # cyrus-sasl → dbus → accounts-daemon, so failures block any rebuild.
+  nixpkgs.overlays = [
+    (final: prev: {
+      openldap = prev.openldap.overrideAttrs (_: { doCheck = false; });
+    })
+  ];
+
   environment.systemPackages = with pkgs; [
     bat
     binutils
@@ -29,7 +44,7 @@
     fzf
     git
     jq
-    nixfmt-rfc-style
+    nixfmt
     nixpkgs-fmt
     python3
     wget

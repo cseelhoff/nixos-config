@@ -13,6 +13,7 @@
       enable = true;
       configurationLimit = 10;
       editor = false;
+      memtest86.enable = true;  # Adds Memtest86+ entry to the boot menu
     };
     efi = {
       canTouchEfiVariables = true;

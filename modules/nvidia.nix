@@ -24,6 +24,7 @@
   boot.kernelParams = [
     "nvidia_drm.modeset=1"
     "nvidia_drm.fbdev=1"
+    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"  # This is the big one for resume corruption
   ];
 
   # Graphics stack (32-bit needed for Steam/Proton).
@@ -36,6 +37,7 @@
     modesetting.enable = true;
     open = true;
     nvidiaSettings = true;
+    powerManagement.enable = true;  # Enables nvidia-suspend/resume services + VRAM preservation
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 }

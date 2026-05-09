@@ -31,6 +31,7 @@ in
   # --- Dark mode globally ---
   gtk = {
     enable = true;
+    gtk4.theme = null;  # adopt new HM default (was config.gtk.theme pre-26.05)
     theme = {
       name = "Materia-dark";
       package = pkgs.materia-theme;

@@ -23,7 +23,7 @@ in
         plugins = [ "git" "history" "zoxide" ];
       };
     };
-    neovim = { enable = true; defaultEditor = true; viAlias = true; withPython3 = true; };
+    neovim = { enable = true; defaultEditor = true; viAlias = true; withPython3 = true; withRuby = false; };
 
     # Ghostty: GUI terminal, but its config is WM-agnostic.
     # Only enable on graphical hosts — WSL/headless don't have a display.
