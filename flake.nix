@@ -42,11 +42,25 @@
           inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable;
         };
       };
+      forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ];
     in {
       nixosConfigurations = {
         nixos-gui = mkNixos "nixos-gui" ./hosts/nixos-gui.nix;
         x870 = mkNixos "x870" ./hosts/x870.nix;
         wsl = mkNixos "wsl" ./hosts/wsl.nix;
       };
+
+      devShells = forAllSystems (system:
+        let pkgs = import nixpkgs { inherit system; };
+        in {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              nix
+              nixpkgs-fmt
+              nil
+              git
+            ];
+          };
+        });
     };
 }

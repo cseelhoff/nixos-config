@@ -17,6 +17,7 @@ in
     home.packages = [
       pkgs-unstable.onedriver  # OneDrive FUSE client (unstable for latest auth fixes)
       code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider
+      pkgs.grayjay            # Grayjay desktop media app (unfree)
     ];
 
     programs.git = {

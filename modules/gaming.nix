@@ -11,6 +11,39 @@
 let
   isNvidia = lib.elem "nvidia" (config.services.xserver.videoDrivers or []);
 
+  partydeckPkg = partydeck.packages.x86_64-linux.default;
+
+  # Start-menu entry for PartyDeck. The upstream package ships only the
+  # binary, so we build a .desktop file with makeDesktopItem and merge
+  # it into the package via symlinkJoin. KDE's kbuildsycoca6 picks this
+  # up automatically because it lands in $out/share/applications and
+  # the package is in environment.systemPackages (which gets exported
+  # in XDG_DATA_DIRS).
+  partydeckDesktop = pkgs.makeDesktopItem {
+    name = "partydeck";
+    desktopName = "PartyDeck";
+    comment = "Split-screen game launcher";
+    exec = "partydeck";
+    icon = "partydeck";
+    terminal = false;
+    categories = [ "Game" ];
+  };
+
+  partydeckWithDesktop = pkgs.symlinkJoin {
+    name = "partydeck-with-desktop";
+    paths = [
+      partydeckPkg
+      partydeckDesktop
+      # Icon: stick the upstream PNG into the hicolor theme so KDE finds it.
+      (pkgs.runCommand "partydeck-icon" {} ''
+        mkdir -p $out/share/icons/hicolor/512x512/apps
+        cp ${partydeckPkg.src or partydeckPkg}/.github/assets/icon.png \
+           $out/share/icons/hicolor/512x512/apps/partydeck.png 2>/dev/null || \
+        echo "no upstream icon, skipping"
+      '')
+    ];
+  };
+
   # Breeze SDDM theme with a solid black background.
   sddm-breeze-black = pkgs.stdenvNoCC.mkDerivation {
     pname = "sddm-breeze-black";
@@ -66,7 +99,7 @@ in
     wineWow64Packages.staging
     bubblewrap         # PartyDeck: sandboxing for controller isolation
     fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
-    partydeck.packages.x86_64-linux.default  # PartyDeck splitscreen launcher
+    partydeckWithDesktop  # PartyDeck splitscreen launcher + .desktop entry
     godot_4            # game engine (TLS overlay applied above)
   ];
 
