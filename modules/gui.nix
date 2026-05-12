@@ -36,6 +36,7 @@
     brave
     vscode
     obsidian
+    localsend          # LAN file sharing (LocalSend)
 
     # Hyprland ecosystem
     xdg-desktop-portal-hyprland
@@ -49,6 +50,10 @@
     playerctl          # media key control
     hyprlock           # lock screen (Super+L)
   ];
+
+  # LocalSend: open TCP+UDP 53317 on all interfaces.
+  networking.firewall.allowedTCPPorts = [ 53317 ];
+  networking.firewall.allowedUDPPorts = [ 53317 ];
 
   programs.thunar = {
     enable = true;
