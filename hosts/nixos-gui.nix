@@ -3,6 +3,7 @@
   imports = [
     ../hardware/nixos-gui-hardware-configuration.nix
     ../modules/gui.nix
+    ../modules/vscode-tunnel.nix
   ];
 
   boot.loader = {

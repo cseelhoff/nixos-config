@@ -6,6 +6,7 @@
     ../modules/gui.nix
     ../modules/nvidia.nix
     ../modules/gaming.nix
+    ../modules/vscode-tunnel.nix
   ];
 
   boot.loader = {
@@ -29,4 +30,20 @@
 
   networking.networkmanager.enable = true;
   time.timeZone = "America/Chicago";
+
+  # Disable all forms of sleep/suspend/hibernate (desktop, always-on).
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
+  # Prevent suspend on lid close (laptops) and idle.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+    HandleLidSwitchDocked = "ignore";
+    HandleSuspendKey = "ignore";
+    HandleHibernateKey = "ignore";
+    IdleAction = "ignore";
+  };
 }

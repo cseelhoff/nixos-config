@@ -28,9 +28,15 @@
       url = "github:iosmanthus/code-insiders-flake";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    nixos-vscode-server = {
+      # Per-connection autoPatchelf of the VS Code server payload that
+      # gets dropped into ~/.vscode-server[-insiders]/ on each connect.
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, partydeck, code-insiders, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, nixos-wsl, partydeck, code-insiders, nixos-vscode-server, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -39,7 +45,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable;
+          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable nixos-vscode-server;
         };
       };
       forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ];
