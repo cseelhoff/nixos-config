@@ -53,6 +53,11 @@
     dnsutils
     drm_info
     _7zz
+    odin
+    clang
+    llvmPackages.llvm
+    llvmPackages.bintools
+    lldb
   ];
 
   programs = {
