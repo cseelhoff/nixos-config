@@ -12,6 +12,11 @@
 {
   imports = [ nixos-vscode-server.nixosModules.default ];
 
+  # Start the user-level tunnel service at boot without requiring a
+  # login session. Without linger, the unit only fires after caleb's
+  # first interactive login of the boot — defeating headless tunneling.
+  users.users.caleb.linger = true;
+
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [

@@ -157,11 +157,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775436631,
-        "narHash": "sha256-g8054fVQfp2apFVu11TEOmopNV2QWbgMeHBG6IvyA5c=",
+        "lastModified": 1778940328,
+        "narHash": "sha256-fiLfV+B61Je/m2aPTv0F6EzJ5GeNJIqlmyPRMddIMoY=",
         "owner": "cseelhoff",
         "repo": "partydeck",
-        "rev": "9c3bba86656e695b5af9f0c6db7d1b91fee80cc4",
+        "rev": "bac1314d662fc212e16920c733f5e12b653a480a",
         "type": "github"
       },
       "original": {

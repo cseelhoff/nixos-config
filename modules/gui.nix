@@ -36,6 +36,7 @@
     brave
     vscode
     obsidian
+    fsearch            # fast file search (GTK)
     localsend          # LAN file sharing (LocalSend)
 
     # Hyprland ecosystem
