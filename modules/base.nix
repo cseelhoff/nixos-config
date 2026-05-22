@@ -43,6 +43,7 @@
     dnsutils
     drm_info
     _7zz
+    sqlite
     nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.odin
     clang
     llvmPackages.llvm

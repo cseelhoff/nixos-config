@@ -21,13 +21,11 @@ in
 
     home.packages = lib.optionals hostIsGraphical [
       pkgs-unstable.onedriver  # OneDrive FUSE client (unstable for latest auth fixes)
-      # VS Code Insiders from nixpkgs-unstable: cached by Hydra, installs in seconds.
-      # For bleeding-edge (today's upstream build), either run ad-hoc:
-      #     nix run github:iosmanthus/code-insiders-flake#vscode-insider
-      # or swap this line to use the `code-insiders` flake input directly:
-      #     code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider
-      # (then `nix flake update code-insiders` to pull the latest build).
-      pkgs-unstable.vscode-insiders
+      # VS Code Insiders from the `code-insiders` flake input — auto-updated
+      # daily upstream. Run `nix flake update code-insiders` to pull the
+      # latest build, then rebuild. (nixpkgs-unstable's `vscode-insiders`
+      # attr is gone as of the 2026-05 channel bump.)
+      code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider
       pkgs.grayjay            # Grayjay desktop media app (unfree)
     ];
 
