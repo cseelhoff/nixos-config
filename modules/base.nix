@@ -1,4 +1,4 @@
-{ pkgs, lib, home-manager, ... }:
+{ pkgs, lib, home-manager, nixpkgs-unstable, ... }:
 {
   imports = [
     home-manager.nixosModules.home-manager
@@ -43,7 +43,7 @@
     dnsutils
     drm_info
     _7zz
-    odin
+    nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.odin
     clang
     llvmPackages.llvm
     llvmPackages.bintools
