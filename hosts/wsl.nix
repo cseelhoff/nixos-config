@@ -1,16 +1,22 @@
 { config, pkgs, nixos-wsl, ... }:
 {
-  imports = [ nixos-wsl.nixosModules.default ];
+  imports = [
+    ../hardware/wsl-hardware-configuration.nix
+    nixos-wsl.nixosModules.default
+  ];
 
-  # WSL uses the Windows NVIDIA driver (no kernel module on the Linux side),
-  # so we enable cudaSupport + install cudatoolkit here rather than via
-  # ../modules/nvidia.nix (which assumes a Linux NVIDIA kernel driver).
-  nixpkgs.config.cudaSupport = true;
+  # WSL uses the Windows NVIDIA driver (no kernel module on the Linux side).
+  # We intentionally do NOT set nixpkgs.config.cudaSupport = true here:
+  # it forces a from-source rebuild of every CUDA-linked package because
+  # Hydra only caches the non-CUDA variants. The userspace cudatoolkit
+  # below is cached and is what apps actually consume in WSL.
 
   wsl = {
     enable = true;
+    defaultUser = "caleb";
     useWindowsDriver = true;
     startMenuLaunchers = true;
+    wslConf.network.hostname = "wsl";
     extraBin = [
       { src = "${pkgs.coreutils}/bin/mkdir"; }
       { src = "${pkgs.coreutils}/bin/cat"; }
@@ -36,7 +42,7 @@
 
   programs.nix-ld = {
     enable = true;
-    package = pkgs.nix-ld-rs;
+    package = pkgs.nix-ld;
   };
 }
 

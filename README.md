@@ -78,7 +78,7 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
    sudo git -c user.email=install@localhost -c user.name=install \
         commit -m "nixos-gui hardware config"
 
-   sudo nixos-install --root /mnt --flake .#nixos-gui
+   sudo nixos-install --root /mnt --flake '.#nixos-gui'
    ```
    - This:
      - Clones your repo to the target (`/mnt/etc/nixos` – writable!).
@@ -99,7 +99,7 @@ After first boot, you're running your full declarative config. Future updates:
 ```bash
 cd /etc/nixos   # or wherever you cloned it
 git pull
-sudo nixos-rebuild switch --flake .#nixos-gui
+sudo nixos-rebuild switch --flake '.#nixos-gui'
 ```
 
 **Note on direct GitHub install** (`--flake github:...`):  
@@ -112,7 +112,7 @@ It fails with "hardware-configuration.nix does not exist" because flakes evaluat
 sudo hostnamectl set-hostname mycoolhost
 # Edit flake.nix to add/override networking.hostName = "mycoolhost";
 # git commit & push (only if you want this host reusable from GitHub)
-sudo nixos-rebuild switch --flake .#mycoolhost
+sudo nixos-rebuild switch --flake '.#mycoolhost'
 ```
 
 ### Change username
@@ -125,7 +125,7 @@ Better: keep `admin` as primary, add extras via `users.users.yourname = { ... };
 cd /etc/nixos   # or your clone path
 git pull
 nix flake update               # optional: refresh inputs
-sudo nixos-rebuild switch --flake .#$(hostname)   # or #nixos-gui / #wsl
+sudo nixos-rebuild switch --flake ".#$(hostname)"   # or #nixos-gui / #wsl
 ```
 
 For WSL first setup:
@@ -134,7 +134,7 @@ For WSL first setup:
   ```bash
   git clone https://github.com/cseelhoff/nixos-config.git ~/nixos-config
   cd ~/nixos-config
-  sudo nixos-rebuild switch --flake .#wsl
+  sudo nixos-rebuild switch --flake '.#wsl'
   ```
 
 ## Tips

@@ -25,16 +25,6 @@
   # flake-based nix CLI evaluations, which read this env var when --impure.
   environment.variables.NIXPKGS_ALLOW_UNFREE = "1";
 
-  # Disable openldap's flaky test017-syncreplication-refresh, which is
-  # timing-dependent (hardcoded `sleep 7` waits for replication) and fails
-  # intermittently on fast/loaded machines. Pulled in transitively via
-  # cyrus-sasl → dbus → accounts-daemon, so failures block any rebuild.
-  nixpkgs.overlays = [
-    (final: prev: {
-      openldap = prev.openldap.overrideAttrs (_: { doCheck = false; });
-    })
-  ];
-
   environment.systemPackages = with pkgs; [
     bat
     binutils
