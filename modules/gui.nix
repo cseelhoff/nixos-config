@@ -80,7 +80,13 @@
 
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    # Hyprland portal handles wlroots integration; GTK portal provides
+    # the FileChooser interface many apps expect.
+    extraPortals = [
+      pkgs.kdePackages.xdg-desktop-portal-kde
+      pkgs.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk
+    ];
   };
 
   # ---------------------------------------------------------------------
