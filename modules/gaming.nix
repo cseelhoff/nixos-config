@@ -104,7 +104,10 @@ in
   ];
 
   # --- Goldberg Steam Emu (PartyDeck LAN multiplayer) ---
-  networking.firewall.allowedUDPPorts = [ 47584 ];
+  # 47584      : Goldberg LAN broadcast
+  # 8211       : Palworld UE5 P2P listen (dedicated/co-op join-by-IP)
+  # 55555      : Nemirtingas Epic Emu (NEE) LAN lobby discovery broadcast
+  networking.firewall.allowedUDPPorts = [ 47584 8211 55555 ];
   networking.firewall.allowedTCPPorts = [ 47584 ];
 
   # Steam + Proton

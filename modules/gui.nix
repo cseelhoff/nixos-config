@@ -80,13 +80,38 @@
 
   xdg.portal = {
     enable = true;
-    # Hyprland portal handles wlroots integration; GTK portal provides
-    # the FileChooser interface many apps expect.
+    # Hyprland portal handles screencast/global-shortcuts/window-picking
+    # via wlroots; GTK portal handles FileChooser, AppChooser, Print,
+    # Settings, etc. The KDE portal is auto-injected by
+    # services.desktopManager.plasma6 (in modules/gaming.nix) so it
+    # doesn't need to be listed here — but we explicitly route
+    # FileChooser AWAY from it below, because the KDE backend in
+    # current nixpkgs sometimes fails to register that interface and
+    # apps die with "No such interface org.freedesktop.portal.FileChooser".
     extraPortals = [
-      pkgs.kdePackages.xdg-desktop-portal-kde
       pkgs.xdg-desktop-portal-hyprland
       pkgs.xdg-desktop-portal-gtk
     ];
+    # Per-desktop routing. Keys match XDG_CURRENT_DESKTOP; `common` is
+    # the fallback. SDDM (from modules/gaming.nix) offers both Plasma
+    # and Hyprland sessions, so both desktops are configured here.
+    # FileChooser is forced to the GTK backend everywhere — the KDE
+    # backend in current nixpkgs has a habit of failing to register
+    # the interface, producing "No such interface
+    # org.freedesktop.portal.FileChooser" for any app that asks for it.
+    config = {
+      hyprland = {
+        default = [ "hyprland" "gtk" ];
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      };
+      kde = {
+        default = [ "kde" "gtk" ];
+        "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      };
+      common = {
+        default = [ "gtk" ];
+      };
+    };
   };
 
   # ---------------------------------------------------------------------
