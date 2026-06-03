@@ -41,6 +41,8 @@
     zoxide
     podman-compose
     dnsutils
+    tcpdump
+    openssl
     drm_info
     _7zz
     sqlite
