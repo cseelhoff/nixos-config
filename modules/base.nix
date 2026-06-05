@@ -43,6 +43,8 @@
     dnsutils
     tcpdump
     openssl
+    ripgrep
+    unzip
     drm_info
     _7zz
     sqlite
