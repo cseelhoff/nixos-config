@@ -12,6 +12,14 @@ let
   # binary isn't needed there because Windows pushes the server payload
   # into ~/.vscode-server-insiders/ (autoPatchelf'd via nixos-vscode-server).
   hostIsGraphical = config.programs.hyprland.enable or false;
+  # Patch the upstream `code-insiders` package to tolerate missing
+  # ripgrep binary removal (some upstream releases lack that path).
+  ciPkg = code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider;
+  ciPatched = ciPkg.overrideAttrs (old: {
+    patchPhase = (if builtins.hasAttr "patchPhase" old then old.patchPhase else "") + ''
+      rm -f resources/app/node_modules/@vscode/ripgrep/bin/rg || true
+    '';
+  });
 in
 {
   home-manager.users.caleb = {
@@ -21,11 +29,9 @@ in
 
     home.packages = lib.optionals hostIsGraphical [
       pkgs-unstable.onedriver  # OneDrive FUSE client (unstable for latest auth fixes)
-      # VS Code Insiders from the `code-insiders` flake input — auto-updated
-      # daily upstream. Run `nix flake update code-insiders` to pull the
-      # latest build, then rebuild. (nixpkgs-unstable's `vscode-insiders`
-      # attr is gone as of the 2026-05 channel bump.)
-      code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider
+      # VS Code Insiders from the `code-insiders` flake input — patched to
+      # ignore missing ripgrep removal errors.
+      ciPatched
       pkgs.grayjay            # Grayjay desktop media app (unfree)
     ];
 

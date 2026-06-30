@@ -58,6 +58,7 @@ in
       settings = {
         theme = "vintage-light";
         #minimum-contrast = 2;  # or 3 for stronger boost
+        scrollback-limit = 100000000;  # ~100 MB per surface (default ~10 MB), in bytes
       };
     };
   };

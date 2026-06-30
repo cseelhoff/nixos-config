@@ -14,7 +14,11 @@
 
 let
   vscodeInsiders =
-    code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider;
+    (code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider).overrideAttrs (old: {
+      patchPhase = (if builtins.hasAttr "patchPhase" old then old.patchPhase else "") + ''
+        rm -f resources/app/node_modules/@vscode/ripgrep/bin/rg || true
+      '';
+    });
 in
 {
   imports = [ nixos-vscode-server.nixosModules.default ];

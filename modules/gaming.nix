@@ -96,6 +96,7 @@ in
     protonup-qt
     lutris
     bottles
+    heroic             # native GOG Galaxy / Epic / Amazon library launcher
     wineWow64Packages.staging
     bubblewrap         # PartyDeck: sandboxing for controller isolation
     fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles

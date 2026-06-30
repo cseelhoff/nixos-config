@@ -7,6 +7,8 @@
     ../modules/nvidia.nix
     ../modules/gaming.nix
     ../modules/vscode-tunnel.nix
+    ../modules/foundryvtt.nix
+    ../modules/ollama.nix
   ];
 
   boot.loader = {
