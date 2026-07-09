@@ -35,6 +35,14 @@ in
       pkgs.grayjay            # Grayjay desktop media app (unfree)
     ];
 
+    programs.zsh = {
+      enable = true;
+      # Add the Grok path
+      initExtra = ''
+        export PATH="$HOME/.grok/bin:$PATH"
+      '';
+    };
+
     programs.git = {
       enable = true;
       settings.user.name = "cseelhoff";
