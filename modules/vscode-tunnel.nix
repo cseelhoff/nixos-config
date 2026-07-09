@@ -74,6 +74,24 @@ in
   #     tunnel user login --provider github
   #   systemctl --user enable --now code-insiders-tunnel.service
   # After that, reboots bring the tunnel back with no interaction.
+  #
+  # If the service is active but clients cannot connect, check:
+  #   VSCODE_CLI_USE_FILE_KEYCHAIN=1 code-insiders \
+  #     --cli-data-dir ~/.vscode-insiders/cli \
+  #     tunnel user show
+  #   VSCODE_CLI_USE_FILE_KEYCHAIN=1 code-insiders \
+  #     --cli-data-dir ~/.vscode-insiders/cli \
+  #     tunnel status
+  #   journalctl --user -u code-insiders-tunnel.service --since '30 min ago'
+  # Auth failures usually show up as `authorization_pending` / `expired_token`.
+  # Re-run the login command above with VSCODE_CLI_USE_FILE_KEYCHAIN=1 so the
+  # token lands in the same file keychain this systemd service reads.
+  #
+  # If the logs say "An existing tunnel is running on this machine", a stale
+  # GUI-launched singleton may be hijacking the service. Look for it with:
+  #   pgrep -af 'code.*tunnel|code-tunnel-insiders|\.vscode-insiders/cli'
+  # and stop the stale `code-tunnel-insiders tunnel --name x870 ...` process
+  # before restarting this service.
   systemd.user.services.code-insiders-tunnel = {
     description = "Visual Studio Code - Insiders Tunnel (declarative)";
     after = [ "network-online.target" ];
