@@ -38,7 +38,7 @@ in
     programs.zsh = {
       enable = true;
       # Add the Grok path
-      initExtra = ''
+      initContent = ''
         export PATH="$HOME/.grok/bin:$PATH"
       '';
     };
