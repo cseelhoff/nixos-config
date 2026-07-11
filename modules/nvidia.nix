@@ -17,6 +17,13 @@
     nvtopPackages.full
   ];
 
+  # Some FHS/bubblewrap launchers (including Beyond All Reason) hide the
+  # host's /etc/egl directory but retain /run/opengl-driver. Point GLVND at
+  # the NVIDIA external-platform descriptors that remain visible so Wayland
+  # does not fall back to software rendering.
+  environment.sessionVariables.__EGL_EXTERNAL_PLATFORM_CONFIG_DIRS =
+    "/run/opengl-driver/share/egl/egl_external_platform.d";
+
   # X / Wayland driver selection.
   services.xserver.videoDrivers = [ "nvidia" ];
 

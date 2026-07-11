@@ -33,7 +33,7 @@
       # Follows unstable so it gets the freshest glibc/electron deps.
       # Launch:  `code-insiders`  (installed in home/caleb.nix)
       # Update:  `nix flake update code-insiders && sudo nixos-rebuild switch --flake .#<host>`
-      url = "github:iosmanthus/code-insiders-flake/618521df86f02492e8dc15966e0400ffdd2bcece";
+      url = "github:iosmanthus/code-insiders-flake";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     nixos-vscode-server = {
