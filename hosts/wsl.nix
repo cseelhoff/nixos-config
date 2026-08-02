@@ -5,11 +5,12 @@
     nixos-wsl.nixosModules.default
   ];
 
-  # WSL uses the Windows NVIDIA driver (no kernel module on the Linux side).
-  # We intentionally do NOT set nixpkgs.config.cudaSupport = true here:
-  # it forces a from-source rebuild of every CUDA-linked package because
-  # Hydra only caches the non-CUDA variants. The userspace cudatoolkit
-  # below is cached and is what apps actually consume in WSL.
+  # No CUDA here on purpose. `nixpkgs.config.cudaSupport` would force a
+  # from-source rebuild of every CUDA-linked package (Hydra only caches the
+  # non-CUDA variants), and even the plain `cudatoolkit` package is a multi-GB
+  # closure. WSL exposes the Windows NVIDIA driver at /usr/lib/wsl/lib, so GPU
+  # work is better done per-project (devShell / container / uv venv wheels)
+  # than baked into the system closure.
 
   wsl = {
     enable = true;
@@ -32,13 +33,8 @@
     ];
   };
 
-  environment = {
-    sessionVariables = {
-      CUDA_PATH = "${pkgs.cudatoolkit}";
-      LD_LIBRARY_PATH = "/usr/lib/wsl/lib";
-    };
-    systemPackages = [ pkgs.cudatoolkit ];
-  };
+  # Windows NVIDIA driver stubs (libcuda.so, nvidia-smi) live here.
+  environment.sessionVariables.LD_LIBRARY_PATH = "/usr/lib/wsl/lib";
 
   programs.nix-ld = {
     enable = true;
