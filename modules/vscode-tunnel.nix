@@ -15,12 +15,16 @@
 let
   vscodeInsiders =
     (code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider).overrideAttrs (old: {
-      dontStrip = true;
       patchPhase = (if builtins.hasAttr "patchPhase" old then old.patchPhase else "") + ''
         rm -f resources/app/node_modules/@vscode/ripgrep/bin/rg || true
       '';
       preFixup = (if builtins.hasAttr "preFixup" old then old.preFixup else "") + ''
-        rm -f "$out/lib/vscode/resources/app/node_modules/@vscode/vsce-sign/bin/vsce-sign" || true
+        vsceSignUnpacked="$out/lib/vscode/resources/app/node_modules.asar.unpacked/@vscode/vsce-sign/bin/vsce-sign"
+        vsceSignMirror="$out/lib/vscode/resources/app/node_modules/@vscode/vsce-sign/bin/vsce-sign"
+        if [ -e "$vsceSignUnpacked" ] && [ ! -e "$vsceSignMirror" ]; then
+          mkdir -p "$(dirname "$vsceSignMirror")"
+          cp "$vsceSignUnpacked" "$vsceSignMirror"
+        fi
       '';
     });
 in
