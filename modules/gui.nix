@@ -65,6 +65,16 @@
     ];
   };
 
+  # Default to Thunar for directory opens from xdg-open, browsers, desktop
+  # launchers, and both Hyprland and Plasma sessions. The per-user migration
+  # in home/common.nix replaces any older Dolphin override with higher XDG
+  # precedence while preserving every unrelated MIME preference.
+  xdg.mime = {
+    addedAssociations."inode/directory" = "thunar.desktop";
+    defaultApplications."inode/directory" = "thunar.desktop";
+    removedAssociations."inode/directory" = "org.kde.dolphin.desktop";
+  };
+
   services.gvfs.enable = true;     # trash, remote mounts, MTP
   services.tumbler.enable = true;  # thumbnail generation
 

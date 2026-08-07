@@ -63,5 +63,30 @@ in
     };
   };
 
+  # User MIME choices outrank /etc/xdg/mimeapps.list. Remove stale Dolphin
+  # entries without taking ownership of the whole file, so every unrelated
+  # user-selected default survives.
+  home.activation.defaultFileManager = lib.mkIf hostIsGraphical (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      mimeApps="''${XDG_CONFIG_HOME:-$HOME/.config}/mimeapps.list"
+      if [[ -L "$mimeApps" ]]; then
+        mimeApps="$(${pkgs.coreutils}/bin/readlink -f "$mimeApps")"
+      fi
+      if [[ -f "$mimeApps" ]]; then
+        $DRY_RUN_CMD ${pkgs.gnused}/bin/sed --in-place --regexp-extended \
+          --expression='s/org\.kde\.dolphin\.desktop;?//g' \
+          --expression='/^inode\/directory=$/d' \
+          "$mimeApps"
+      fi
+
+      $DRY_RUN_CMD ${pkgs.coreutils}/bin/env \
+        XDG_CURRENT_DESKTOP=X-Generic \
+        KDE_FULL_SESSION= \
+        KDE_SESSION_VERSION=0 \
+        DESKTOP_SESSION= \
+        ${pkgs.xdg-utils}/bin/xdg-mime default thunar.desktop inode/directory
+    ''
+  );
+
   home.stateVersion = "25.11";
 }

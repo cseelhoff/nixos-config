@@ -142,6 +142,14 @@ in
   # KDE Plasma 6 — required for PartyDeck splitscreen tiling (KWin script).
   services.desktopManager.plasma6.enable = true;
 
+  # PartyDeck needs KWin, not KDE's file manager. Keep Plasma's default
+  # package set from installing Dolphin alongside the system-wide Thunar
+  # configuration in modules/gui.nix.
+  environment.plasma6.excludePackages = with pkgs.kdePackages; [
+    dolphin
+    dolphin-plugins
+  ];
+
   # X server stack — Plasma uses Wayland, but several KDE tools still
   # pull in X11 bits and SDDM-X provides fallback sessions.
   services.xserver.enable = true;
