@@ -12,6 +12,7 @@ let
   # binary isn't needed there because Windows pushes the server payload
   # into ~/.vscode-server-insiders/ (autoPatchelf'd via nixos-vscode-server).
   hostIsGraphical = config.programs.hyprland.enable or false;
+  hostIsX870 = config.networking.hostName == "x870";
   # Patch the upstream `code-insiders` package to tolerate missing
   # ripgrep binary removal (some upstream releases lack that path).
   ciPkg = code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider;
@@ -42,6 +43,22 @@ in
       ciPatched
       pkgs.grayjay            # Grayjay desktop media app (unfree)
     ];
+
+    # Own the launcher-compatible instance declaratively. The launcher creates
+    # direct /nix/store unit links, which can become stale after a package
+    # generation changes and leave the underlying mountpoint looking empty.
+    systemd.user.services."onedriver@home-caleb-OneDrive" = lib.mkIf hostIsX870 {
+      Unit.Description = "OneDrive mount";
+      Service = {
+        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %f";
+        ExecStart = "${pkgs-unstable.onedriver}/bin/onedriver --log info %f";
+        ExecStopPost = "/run/wrappers/bin/fusermount3 -uz /%I";
+        Restart = "on-abnormal";
+        RestartSec = 3;
+        RestartForceExitStatus = 2;
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
 
     programs.zsh = {
       enable = true;
