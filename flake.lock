@@ -61,11 +61,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781841991,
-        "narHash": "sha256-qeZFGkPvMkqBfZNw9ANAgISw8F6clxxIrEbXPbqHpSE=",
+        "lastModified": 1786747430,
+        "narHash": "sha256-XhsLw5mSJt50geg9QHEvm60lf2m4P2eDxR6Ut/x/84c=",
         "ref": "refs/heads/main",
-        "rev": "100c5425a151ceabf62e2189af1ccead81dca9de",
-        "revCount": 161,
+        "rev": "2c83b0d5dbd2e74700d6636dc3c700bf94535d7e",
+        "revCount": 162,
         "type": "git",
         "url": "file:///home/caleb/src/nix-foundryvtt"
       },

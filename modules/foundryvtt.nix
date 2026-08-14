@@ -31,13 +31,22 @@
 #        nix build .#foundryvtt.passthru.updateScript
 #        ./result ~/Downloads/FoundryVTT-Linux-14.<build>.zip stable
 #        git commit -am "foundryvtt_14: add 14.0.0+<build>"
-#        cd /etc/nixos && nix flake lock --update-input foundryvtt
+#        cd ~/nixos-config && nix flake lock --update-input foundryvtt
 #   3. Add the zip to the store and pin a GC root:
 #        storepath=$(nix-store --add-fixed sha256 \
 #          ~/Downloads/FoundryVTT-Linux-14.<build>.zip)
 #        nix-store --add-root \
 #          ~/.nix-foundry-roots/FoundryVTT-Linux-14.<build>.zip -r "$storepath"
-#   4. Rebuild:  sudo nixos-rebuild switch --flake .#x870
+#   4. Rebuild:  sudo nixos-rebuild switch --flake ~/nixos-config#x870
+#
+#   Verify before rebuilding — this catches a bad hash without needing sudo:
+#     nix build --no-link --print-out-paths \
+#       '.#nixosConfigurations.x870.config.services.foundryvtt.package'
+#
+#   NOTE the zip flavour: use the *Linux* build (~250 MB, Electron layout with
+#   resources/app/main.js), which is what these steps and every existing GC root
+#   use. The separate FoundryVTT-Node-<build>.zip (~148 MB, main.js at the root)
+#   is the headless server archive and is NOT what this packaging expects.
 #
 # Activate your license key and create worlds via the web UI on first run.
 
@@ -62,4 +71,20 @@
   # The module hardens the service but deliberately leaves the firewall
   # alone. Direct LAN access needs the listen port opened explicitly.
   networking.firewall.allowedTCPPorts = [ config.services.foundryvtt.port ];
+
+  # Read-only visibility into the service's data directory for the admin user.
+  #
+  # /var/lib/foundryvtt is drwxr-x--- foundryvtt:foundryvtt, so nothing outside
+  # the service can see which packages are installed or what the world config
+  # says. foundry-autoconfig's read-only `status` and `plan` commands need that
+  # visibility to diff the install against a declared profile.
+  #
+  # Group membership rather than sudo is deliberate: the group already has r-x
+  # and no write bit, so this grants exactly read and traverse and cannot be
+  # escalated into a write. The tool never writes here by design — it emits a
+  # runbook for a human instead (foundry-autoconfig ADR 0008).
+  #
+  # NixOS merges extraGroups across modules, so this composes with the entries
+  # in base.nix and gaming.nix rather than replacing them.
+  users.users.caleb.extraGroups = [ "foundryvtt" ];
 }
