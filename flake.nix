@@ -8,10 +8,11 @@
     # for things we want bleeding-edge (e.g. onedriver auth fixes).
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # Ollama-only nixpkgs pin (consumed solely by modules/ollama.nix). Stable
-    # (nixos-25.11) ships Ollama 0.21.1, whose bundled llama.cpp doesn't know the
-    # `gemma4` architecture — an imported gemma4 GGUF carrying a vision projector
-    # fails to load ("unknown model architecture: 'gemma4'"). Tracking unstable
-    # here gives a >=0.30 Ollama with a gemma4-aware llama.cpp. Kept SEPARATE from
+    # (nixos-25.11) ships Ollama 0.21.1, whose bundled llama.cpp is too old to know
+    # the model architectures we actually run — it failed first on `gemma4` and would
+    # equally fail on `qwen35` (Qwen3.8's hybrid attention/SSM arch, the current brain),
+    # both surfacing as "unknown model architecture: '<arch>'" at load. Tracking
+    # unstable here gives a >=0.30 Ollama that knows both. Kept SEPARATE from
     # nixpkgs-unstable on purpose: bumping Ollama must not churn the code-insiders
     # / odin / onedriver closures that follow that shared input.
     nixpkgs-ollama.url = "github:nixos/nixpkgs/nixos-unstable";

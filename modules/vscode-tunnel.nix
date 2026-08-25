@@ -36,6 +36,16 @@ in
   # first interactive login of the boot — defeating headless tunneling.
   users.users.caleb.linger = true;
 
+  # The GUI's "Turn on Remote Tunnel Access" toggle spawns its own
+  # `code-tunnel-insiders tunnel --name x870 --parent-process-id N` that
+  # shares ~/.vscode-insiders/cli (same singleton lock) with the service
+  # below. Whichever starts first owns the tunnel; the other attaches as a
+  # client. That is fine — but only if both read the SAME token store.
+  # Without this PAM-set variable the GUI-spawned one falls back to
+  # libsecret/kwallet, finds no token, and polls `authorization_pending`
+  # forever while holding the lock, silently disabling the tunnel.
+  environment.sessionVariables.VSCODE_CLI_USE_FILE_KEYCHAIN = "1";
+
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [

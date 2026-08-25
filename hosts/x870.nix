@@ -9,6 +9,9 @@
     ../modules/vscode-tunnel.nix
     ../modules/foundryvtt.nix
     ../modules/ollama.nix
+    ../modules/ollama-flow-visualizer.nix
+    ../modules/open-webui.nix
+    ../modules/qemu.nix
   ];
 
   boot.loader = {
