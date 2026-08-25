@@ -20,12 +20,20 @@
 # `qemu.ovmf` because libvirt now sees every OVMF image QEMU ships (including
 # the Secure Boot variants) through its firmware descriptors.
 #
-# First-run steps after the initial rebuild:
-#   1. sudo virsh net-start default && sudo virsh net-autostart default
-#      (the NAT network is defined by libvirtd but starts inactive)
-#   2. Log out and back in so the libvirtd group membership below applies;
-#      until then virt-manager and `virsh -c qemu:///system` get "permission
-#      denied" from the daemon socket.
+# Managing guests needs NO sudo. The libvirtd module installs a polkit rule
+# granting org.libvirt.unix.manage to the libvirtd group, and polkit resolves
+# group membership from the user database rather than the calling process's
+# credentials — so it works in already-open shells too, without a re-login.
+# Just be explicit about the connection: `virsh -c qemu:///system`, or set
+# LIBVIRT_DEFAULT_URI=qemu:///system.
+#
+# One-time bootstrap already done on x870 (both are per-state, not per-config):
+#   virsh -c qemu:///system net-start default && net-autostart default
+#   virsh -c qemu:///system pool-define-as default dir --target /var/lib/libvirt/images
+#     then pool-build / pool-start / pool-autostart default
+# The pool matters for unprivileged use: /var/lib/libvirt/images is 0750
+# root:root, so virt-install can only create disks there by going through
+# libvirtd's storage API, which requires the path to be inside a defined pool.
 #
 # Guests live in /var/lib/libvirt/images and are NOT part of this config.
 
@@ -46,9 +54,31 @@
   # GUI manager; also pulls in the dconf backend it stores its settings in.
   programs.virt-manager.enable = true;
 
+  # virt-install/virsh launch this for a guest console; without it they warn and
+  # fall back to a blind `--wait -1`.
+  environment.systemPackages = [ pkgs.virt-viewer ];
+
+  # Without this the CLI tools silently default to qemu:///session, a separate
+  # unprivileged libvirt instance with no `default` network and its own storage
+  # — so `--network network=default` fails with "Network not found".
+  environment.sessionVariables.LIBVIRT_DEFAULT_URI = "qemu:///system";
+
   # Attach physical USB devices to a running guest from the SPICE console.
   virtualisation.spiceUSBRedirection.enable = true;
 
   users.users.caleb.extraGroups = [ "libvirtd" ];
   users.users.admin.extraGroups = [ "libvirtd" ];
+
+  # Drop-box for installer ISOs. Home directories are 0700, which the
+  # qemu-libvirtd account cannot traverse, so an ISO left in ~/Downloads fails
+  # to open; this is group-writable by libvirtd members and world-traversable.
+  #
+  # The images rule is what lets qemu-libvirtd (uid 301) open guest disks at
+  # all: libvirt chowns each disk file to that uid, but the file is
+  # unreachable without search permission on the parent. 0711 is libvirt's
+  # upstream default — traversable by anyone, listable by no one but root.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/libvirt/iso 0775 root libvirtd -"
+    "d /var/lib/libvirt/images 0711 root root -"
+  ];
 }
