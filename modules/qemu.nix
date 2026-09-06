@@ -43,6 +43,14 @@
     onBoot = "ignore";      # don't auto-resume saved guests; start them by hand
     onShutdown = "shutdown"; # ask guests to power off cleanly instead of saving state
 
+    # Resolve guests by name from the host — `ssh caleb@ubuntu24` instead of
+    # chasing whatever address the NAT DHCP handed out. enableGuest matches the
+    # libvirt domain name, enable matches the hostname in its DHCP lease.
+    nss = {
+      enable = true;
+      enableGuest = true;
+    };
+
     qemu = {
       package = pkgs.qemu_kvm;
       runAsRoot = false;
@@ -54,8 +62,8 @@
   # GUI manager; also pulls in the dconf backend it stores its settings in.
   programs.virt-manager.enable = true;
 
-  # virt-install/virsh launch this for a guest console; without it they warn and
-  # fall back to a blind `--wait -1`.
+  # virt-install/virsh launch virt-viewer for a guest console; without it they
+  # warn and fall back to a blind `--wait -1`.
   environment.systemPackages = [ pkgs.virt-viewer ];
 
   # Without this the CLI tools silently default to qemu:///session, a separate

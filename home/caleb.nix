@@ -29,6 +29,24 @@ let
       fi
     '';
   });
+  ubuntu24Launcher = pkgs.writeShellScript "ubuntu24-vm" ''
+    export LIBVIRT_DEFAULT_URI=qemu:///system
+    ${pkgs.libvirt}/bin/virsh start ubuntu24 || true  # already running is fine
+    # --attach is mandatory: the guest's SPICE display uses <listen type='none'/>
+    # for local GL rendering, so there is no socket address to dial.
+    ${pkgs.virt-viewer}/bin/virt-viewer --attach --wait ubuntu24
+    ${pkgs.libvirt}/bin/virsh shutdown ubuntu24 || true  # drop this line to leave the guest running
+  '';
+
+  ubuntu24Desktop = pkgs.makeDesktopItem {
+    name = "ubuntu24-vm";
+    desktopName = "Ubuntu 24.04 VM";
+    comment = "Start the libvirt guest, open its console, power it off on close";
+    exec = "${ubuntu24Launcher}";
+    icon = "virt-viewer";
+    terminal = false;
+    categories = [ "System" ];
+  };
 in
 {
   home-manager.users.caleb = {
@@ -42,7 +60,14 @@ in
       # ignore missing ripgrep removal errors.
       ciPatched
       pkgs.grayjay            # Grayjay desktop media app (unfree)
-    ];
+    ] ++ lib.optional hostIsX870 ubuntu24Desktop;
+
+    # Plasma only offers to run a desktop file dropped in ~/Desktop if it
+    # carries the executable bit; the menu entry above comes from home.packages.
+    home.file."Desktop/ubuntu24-vm.desktop" = lib.mkIf hostIsX870 {
+      source = "${ubuntu24Desktop}/share/applications/ubuntu24-vm.desktop";
+      executable = true;
+    };
 
     # Own the launcher-compatible instance declaratively. The launcher creates
     # direct /nix/store unit links, which can become stale after a package

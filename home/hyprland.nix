@@ -46,18 +46,19 @@ in
     color-scheme = "prefer-dark";
   };
 
-  # Portal config: route Settings interface to gtk backend under Hyprland
-  xdg.configFile."xdg-desktop-portal/portals.conf".text = ''
-    [preferred]
-    default=hyprland;gtk
-    org.freedesktop.impl.portal.Settings=gtk
-  '';
-
   # ---------------------------------------------------------------------------
   # Hyprland – minimal, dark, NVIDIA-friendly
   # ---------------------------------------------------------------------------
   wayland.windowManager.hyprland = {
     enable = true;
+
+    # Portals belong to the system (modules/gui.nix registers hyprland, gtk and
+    # kde together). Left at its default, this module turns on home-manager's
+    # xdg.portal, which exports NIX_XDG_DESKTOP_PORTAL_DIR pointing at the user
+    # profile — and that profile holds *only* hyprland.portal. The variable
+    # applies to every session, so a KDE login found no ScreenCast backend and
+    # browsers failed with "No such interface org.freedesktop.portal.ScreenCast".
+    portalPackage = null;
 
     settings = {
       # ── Wayland env ── (NVIDIA-only entries gated on host config)
