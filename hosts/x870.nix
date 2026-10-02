@@ -12,6 +12,7 @@
     ../modules/ollama-flow-visualizer.nix
     ../modules/open-webui.nix
     ../modules/qemu.nix
+    ../modules/tailscale.nix
   ];
 
   boot.loader = {
