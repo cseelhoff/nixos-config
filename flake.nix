@@ -3,22 +3,22 @@
 
   inputs = {
     # Stable base — most packages come from here so we get Hydra cache hits.
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     # Unstable cherry-pick — used per-package via specialArgs.nixpkgs-unstable
     # for things we want bleeding-edge (e.g. onedriver auth fixes).
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # Ollama-only nixpkgs pin (consumed solely by modules/ollama.nix). Stable
-    # (nixos-25.11) ships Ollama 0.21.1, whose bundled llama.cpp is too old to know
-    # the model architectures we actually run — it failed first on `gemma4` and would
-    # equally fail on `qwen35` (Qwen3.8's hybrid attention/SSM arch, the current brain),
-    # both surfacing as "unknown model architecture: '<arch>'" at load. Tracking
-    # unstable here gives a >=0.30 Ollama that knows both. Kept SEPARATE from
+    # Stable has previously lagged the model architectures we actually run — it
+    # failed first on `gemma4` and would equally fail on `qwen35` (Qwen3.8's hybrid
+    # attention/SSM arch, the current brain), both surfacing as "unknown model
+    # architecture: '<arch>'" at load. Tracking unstable here keeps Ollama current.
+    # Kept SEPARATE from
     # nixpkgs-unstable on purpose: bumping Ollama must not churn the code-insiders
     # / odin / onedriver closures that follow that shared input.
     nixpkgs-ollama.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       # Pin to the home-manager release matching our stable nixpkgs.
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-wsl = {
@@ -41,7 +41,6 @@
       # Per-connection autoPatchelf of the VS Code server payload that
       # gets dropped into ~/.vscode-server[-insiders]/ on each connect.
       url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     foundryvtt = {
       # Community FoundryVTT server packaging + NixOS module

@@ -2,7 +2,9 @@
 
 This is my personal declarative NixOS configuration using **flakes** and **home-manager**, with Hyprland as the Wayland compositor on graphical hosts.
 
-Tracks **`nixos-unstable`** (rolling) — chosen because most of what I run (Hyprland, NVIDIA beta driver, gamescope/Proton, latest Steam) benefits from fresher packages, and to avoid one-off overlays just to bump versions. `system.stateVersion` / `home.stateVersion` are pinned to `25.11` for data-format compatibility — do **not** bump them when updating.
+Tracks the **NixOS 26.05 stable release**, with selected packages sourced from
+`nixos-unstable`. `system.stateVersion` / `home.stateVersion` remain pinned to
+`25.11` for data-format compatibility — do **not** bump them when updating.
 
 Update discipline:
 - `nix flake update` is a deliberate event, not a routine. Do it when you have time to fix breakage.
@@ -35,7 +37,7 @@ Features are **explicitly opted into per host** rather than auto-detected — Ni
 Goal: Boot ISO → minimal steps → your full config → no per-machine git pushes.
 
 1. **Boot the NixOS Minimal ISO**
-   - Download latest minimal ISO: https://nixos.org/download (any recent release ISO works — the flake tracks `nixos-unstable` and will switch the system to it on first rebuild).
+   - Download the latest minimal ISO from https://nixos.org/download (any recent release ISO works; the flake selects its pinned NixOS release on the first rebuild).
    - Boot → login as `nixos` (no password).
 
 2. **Set up networking** (if needed)
