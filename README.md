@@ -14,6 +14,7 @@ Update discipline:
 - **nixos-gui**: Native bare-metal/VM install — generic Wayland desktop, **no NVIDIA, no CUDA, no gaming stack**. Safe for Proxmox VMs and Intel/AMD machines.
 - **x870**: My gaming rig — `nixos-gui` profile + NVIDIA drivers/CUDA + Steam/Proton/gamescope/PartyDeck.
 - **wsl**: WSL2 install (with NixOS-WSL module, Podman, nix-ld, etc.). **No CUDA in the system closure** — the Windows driver is exposed at `/usr/lib/wsl/lib`; get CUDA per-project (devShell, container, or pip/uv wheels).
+- **opi5ultra**: Orange Pi 5 Ultra (RK3588, aarch64), headless. Flash the base image from [orangepi5ultra-nixos](https://github.com/cseelhoff/orangepi5ultra-nixos), boot it, then `git clone` this repo and `sudo nixos-rebuild switch --flake '.#opi5ultra'`. Kernel, Wi-Fi, device tree and disk layout come from that flake's module (no hardware-configuration.nix).
 
 ### Module layout (host opts in to features)
 
@@ -28,6 +29,7 @@ hosts/
   nixos-gui.nix  # base + gui  (Hyprland via greetd)
   x870.nix       # base + gui + nvidia + gaming  (Hyprland + KDE via SDDM)
   wsl.nix        # base + WSL-specific bits (no CUDA)
+  opi5ultra.nix  # base + orangepi5ultra-nixos board module + hardware test tools
 ```
 
 Features are **explicitly opted into per host** rather than auto-detected — Nix evaluation is hermetic and can't reliably probe live hardware, so this stays declarative and debuggable. To add NVIDIA/CUDA to a new host, add `../modules/nvidia.nix` to its `imports`.

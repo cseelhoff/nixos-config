@@ -58,9 +58,16 @@
       url = "git+file:///home/caleb/src/nix-foundryvtt";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    opi5ultra = {
+      # Orange Pi 5 Ultra board support (vendor kernel, Wi-Fi, dtb, SD layout)
+      # and its flashable base image. Deliberately NO `inputs.nixpkgs.follows`:
+      # the kernel is built from that flake's own pinned nixpkgs, so its store
+      # path matches the prebuilt one in Cachix instead of recompiling (~70 min).
+      url = "github:cseelhoff/orangepi5ultra-nixos";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, nixpkgs-ollama, home-manager, nixos-wsl, partydeck, code-insiders, nixos-vscode-server, foundryvtt, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, nixpkgs-ollama, home-manager, nixos-wsl, partydeck, code-insiders, nixos-vscode-server, foundryvtt, opi5ultra, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -69,7 +76,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable nixpkgs-ollama nixos-vscode-server foundryvtt;
+          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable nixpkgs-ollama nixos-vscode-server foundryvtt opi5ultra;
         };
       };
       forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ];
@@ -78,6 +85,7 @@
         nixos-gui = mkNixos "nixos-gui" ./hosts/nixos-gui.nix;
         x870 = mkNixos "x870" ./hosts/x870.nix;
         wsl = mkNixos "wsl" ./hosts/wsl.nix;
+        opi5ultra = mkNixos "opi5ultra" ./hosts/opi5ultra.nix;
       };
 
       devShells = forAllSystems (system:
