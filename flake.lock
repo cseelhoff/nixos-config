@@ -341,11 +341,11 @@
         "nixpkgs-kernel": "nixpkgs-kernel"
       },
       "locked": {
-        "lastModified": 1792185985,
-        "narHash": "sha256-PSCsxxtnTE68tKr6RbxW22dqeYsIgDoSIS0X4t6aGP8=",
+        "lastModified": 1792192282,
+        "narHash": "sha256-gaSFtYivuoH05Mfghvt8T7hqR77bvYBUeuQXzkhgSds=",
         "owner": "cseelhoff",
         "repo": "orangepi5ultra-nixos",
-        "rev": "4178255a3cba3a2918fc917323dd806266b93036",
+        "rev": "7a9662004a70ac85a0d5f3a6701278a405ccc756",
         "type": "github"
       },
       "original": {
