@@ -59,4 +59,23 @@
     # survives garbage collection.
     gh
   ];
+
+  # Lets the prebuilt VS Code (Insiders) server that Remote-SSH pushes into
+  # ~/.vscode-server-insiders/ run on NixOS. modules/vscode-tunnel.nix can't be
+  # imported here: the code-insiders flake only builds for x86_64.
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      stdenv.cc.cc   # libstdc++
+      zlib
+      openssl
+      curl
+      icu
+      libsecret
+      libkrb5
+      nss
+      nspr
+      libgcc
+    ];
+  };
 }
