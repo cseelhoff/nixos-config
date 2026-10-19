@@ -11,6 +11,7 @@
 
   # Create /bin/bash symlink for scripts with #!/bin/bash shebangs
   system.activationScripts.binbash = ''
+    mkdir -p /bin
     ln -sf ${pkgs.bash}/bin/bash /bin/bash
   '';
 

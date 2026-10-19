@@ -86,6 +86,7 @@
         x870 = mkNixos "x870" ./hosts/x870.nix;
         wsl = mkNixos "wsl" ./hosts/wsl.nix;
         opi5ultra = mkNixos "opi5ultra" ./hosts/opi5ultra.nix;
+        opi5ultra-nvme = mkNixos "opi5ultra" ./hosts/opi5ultra-nvme.nix;
       };
 
       devShells = forAllSystems (system:
