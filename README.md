@@ -88,7 +88,7 @@ Goal: Boot ISO → minimal steps → your full config → no per-machine git pus
      - Renames it to the host-specific path your flake imports.
      - Commits it locally so the flake can see it (otherwise eval fails with `nixpkgs.hostPlatform not set`).
      - Installs from the **local flake path** (`--flake .#nixos-gui`).
-   - Use `#wsl` instead of `#nixos-gui` for WSL bootstrap (after initial WSL tar install). For WSL, rename to `hardware/wsl-hardware-configuration.nix`.
+   - WSL uses a different installation path: see [NixOS on Windows 11 / WSL2](#nixos-on-windows-11--wsl2) below. Do not partition disks, run `nixos-install`, or generate hardware configuration for WSL.
    - You may use `sudo nixos-install --root /mnt --flake .#nixos-gui --no-root-passwd` if you wish to skip interactive root password prompt at the end of install. Make sure your flake sets `users.users.admin.initialPassword` (or `initialHashedPassword`); otherwise log in as root via single-user mode and run `passwd admin` after first boot.
 
 5. **Reboot**
@@ -105,7 +105,11 @@ sudo nixos-rebuild switch --flake '.#nixos-gui'
 ```
 
 **Note on direct GitHub install** (`--flake github:...`):  
-It fails with "hardware-configuration.nix does not exist" because flakes evaluate purely from the committed repo contents — `nixos-generate-config` can't run during remote eval. Cloning locally + generating there solves this perfectly for cattle deploys.
+For native hosts needing a new hardware configuration, remote evaluation cannot
+see a locally generated file. Clone locally and add the host's hardware
+configuration before installation. WSL already has a committed
+`hardware/wsl-hardware-configuration.nix` stub specifying `x86_64-linux`;
+NixOS-WSL supplies its filesystem and boot configuration.
 
 ## Post-Install Tweaks (if needed)
 
@@ -118,8 +122,10 @@ sudo nixos-rebuild switch --flake '.#mycoolhost'
 ```
 
 ### Change username
-Hardcoded as `admin` — edit flake.nix (replace all `admin`), commit/push, rebuild.  
-Better: keep `admin` as primary, add extras via `users.users.yourname = { ... };`.
+The shared base creates `admin` and `caleb`; the WSL profile selects `caleb` as
+its default login in `hosts/wsl.nix`. To change that login, update
+`wsl.defaultUser` and the corresponding user and Home Manager definitions.
+Creating another user does not by itself change the WSL default.
 
 ## Everyday Usage (on running system)
 
@@ -130,18 +136,152 @@ nix flake update               # optional: refresh inputs
 sudo nixos-rebuild switch --flake ".#$(hostname)"   # or #nixos-gui / #wsl
 ```
 
-For WSL first setup:
-- Install base NixOS in WSL (official tar/.wsl method).
-- Then:
-  ```bash
-  git clone https://github.com/cseelhoff/nixos-config.git ~/nixos-config
-  cd ~/nixos-config
-  sudo nixos-rebuild switch --flake '.#wsl'
-  ```
+## NixOS on Windows 11 / WSL2
+
+This is the WSL deployment path, not the minimal-ISO installation above.
+Preserve existing distributions: do not use `wsl --unregister`, overwrite an
+existing installation, or format disks.
+
+### 1. Check and install Windows prerequisites
+
+In PowerShell, inspect the current state:
+
+```powershell
+wsl --status
+wsl --list --verbose
+```
+
+If WSL is not installed, open PowerShell **as Administrator** and run:
+
+```powershell
+wsl --install --no-distribution
+```
+
+This installs WSL without installing Ubuntu. Approve the UAC prompt when opening
+the elevated shell. Restart Windows if requested or if WSL2 remains unavailable
+with a pending Windows restart. After restarting, recheck `wsl --status`.
+WSL2 also requires firmware virtualization and the Virtual Machine Platform
+Windows component; do not assume an installation exit code of zero means the
+machine can start WSL2 before the restart.
+
+### 2. Download, verify, and install the official image
+
+Download `nixos.wsl` and its matching `nixos.wsl.sha256` from the same
+[official NixOS-WSL release](https://github.com/nix-community/NixOS-WSL/releases/latest).
+Use the x86-64 image for this repository's WSL host, not `nixos.aarch64.wsl`.
+In a normal, non-elevated PowerShell under your intended Windows account, change
+to the download directory and verify the checksum:
+
+```powershell
+Set-Location "$HOME\Downloads"
+$expected = ((Get-Content .\nixos.wsl.sha256 -Raw).Trim() -split '\s+')[0]
+$actual = (Get-FileHash .\nixos.wsl -Algorithm SHA256).Hash
+if ($actual -ne $expected) { throw "NixOS image checksum mismatch" }
+wsl --version
+wsl --list --verbose
+```
+
+For WSL 2.4.4 or newer, if no distribution named `NixOS` already exists:
+
+```powershell
+wsl --install --from-file .\nixos.wsl --name NixOS --no-launch
+wsl -d NixOS -u root
+```
+
+Keep the default storage location unless you deliberately need another drive.
+If `NixOS` already exists, stop and decide whether to configure it or install
+under a different name; do not overwrite it. See the
+[upstream installation guide](https://nix-community.github.io/NixOS-WSL/install.html)
+for older WSL versions and custom locations.
+
+### 3. Bootstrap the repository as root
+
+Run the following **inside the root NixOS shell**, not PowerShell:
+
+```bash
+cd /root
+nix-channel --update
+nix-shell -p git --run 'git clone https://github.com/cseelhoff/nixos-config.git /root/nixos-config'
+cd /root/nixos-config
+nixos-rebuild switch --flake '.#wsl'
+```
+
+The base image may not include Git, hence the temporary `nix-shell`. Keep the
+clone root-owned for this initial root rebuild: Nix can reject a clone owned by
+another user with `repository ... is not owned by current user`. Do not update
+the flake lock as a bootstrap step; use the repository's pinned inputs.
+
+The first build is substantial even without CUDA. On the November 2026 Windows
+11 installation, the main build fetched 627 paths (1.7 GiB compressed / 7.1 GiB
+unpacked), built 238 derivations, and took about 26 minutes, excluding the earlier
+Git/bootstrap downloads. Allow ample disk space and time; inspect progress
+before treating a long dependency download as a hang. Subsequent rebuilds reuse
+the Nix store.
+
+WSL 3 generates `wsl-mnt-guard.service`, which expects `/bin/true` and
+`/bin/mount`. This profile provides both through `wsl.extraBin`. Without them,
+activation can report exit code 4 and `203/EXEC` for the mount guard even though
+the new system configuration has otherwise activated.
+
+### 4. Finish the default-user transition
+
+The rebuild removes the image's bootstrap user `nixos` and creates the configured
+`caleb` and `admin` users. Using root for bootstrap avoids depending on the
+removed account. Stay in the root shell and finish setup:
+
+```bash
+passwd caleb
+mv /root/nixos-config /home/caleb/nixos-config
+chown -R caleb:users /home/caleb/nixos-config
+cd /root
+git config --global --add safe.directory /home/caleb/nixos-config
+exit
+```
+
+Enter the password interactively; do not put it in a command, script, or commit.
+`caleb` needs it for `sudo`. The narrowly scoped root Git trust entry permits
+future sudo rebuilds of this caleb-owned checkout without disabling ownership
+checks globally. Run Git commands from a Linux directory, not an inherited
+Windows worktree whose `.git` file may reference a Windows-only path.
+
+Back in PowerShell, restart **only this distribution** after saving any work in
+it, so WSL reads its new default-user and hostname configuration:
+
+```powershell
+wsl --terminate NixOS
+wsl -d NixOS
+```
+
+### 5. Verify and maintain the installation
+
+Inside NixOS:
+
+```bash
+whoami                         # caleb
+hostname                       # wsl
+nixos-version
+systemctl is-system-running    # running
+systemctl --failed             # no failed units
+systemctl is-active wsl-mnt-guard home-manager-caleb podman.socket
+podman info --format 'rootless={{.Host.Security.Rootless}}'  # rootless=true
+sudo -v                        # verify your new password
+```
+
+For future updates, use the installed Linux checkout:
+
+```bash
+cd ~/nixos-config
+git pull
+sudo nixos-rebuild switch --flake '.#wsl'
+```
+
+No disk partitioning, `nixos-generate-config`, or hardware-file replacement is
+needed for WSL. This path was verified with WSL 3.0.3 and the official
+NixOS-WSL 2605.7.2 x86-64 image.
 
 ## Tips
 
-- **Hardware per machine**: Lives locally at `/etc/nixos/hardware/<host>-hardware-configuration.nix` — committed only on the target machine's local clone, never pushed upstream unless you want a "pet" machine.
+- **Hardware per machine**: Native hosts use `hardware/<host>-hardware-configuration.nix` in their local clone. WSL uses the committed platform stub; do not replace it with an ISO-generated configuration.
 - **Secrets**: Add sops-nix/agenix later.
 - **Rollback**: Generations in bootloader.
 - **Updates**: `nix flake update` + `--upgrade` for full upgrades.

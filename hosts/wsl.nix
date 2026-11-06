@@ -19,6 +19,9 @@
     startMenuLaunchers = true;
     wslConf.network.hostname = "wsl";
     extraBin = [
+      # WSL 3's generated cross-distribution mount guard uses these paths.
+      { src = "${pkgs.coreutils}/bin/true"; }
+      { src = "${pkgs.util-linux}/bin/mount"; }
       { src = "${pkgs.coreutils}/bin/mkdir"; }
       { src = "${pkgs.coreutils}/bin/cat"; }
       { src = "${pkgs.coreutils}/bin/whoami"; }
@@ -41,4 +44,3 @@
     package = pkgs.nix-ld;
   };
 }
-
