@@ -51,6 +51,7 @@ in
   # ---------------------------------------------------------------------------
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "hyprlang";
 
     # Portals belong to the system (modules/gui.nix registers hyprland, gtk and
     # kde together). Left at its default, this module turns on home-manager's

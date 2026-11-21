@@ -138,6 +138,10 @@ let
     echo "started $i pad bridge(s); press Ctrl-C to stop"
     wait
   '';
+
+  # DLSS 5 Swapper (Linux fork) — manages DLSS 5 Neural Rendering via
+  # ReShade/RenoDX/Feeder/OptiScaler (Proton) and DLSS5VKLayer (Vulkan).
+  dlss5Swapper = pkgs.callPackage ../pkgs/dlss5-swapper.nix { };
 in
 {
   # Fix Godot TLS: nixpkgs build omits system_certs_path, causing
@@ -201,6 +205,7 @@ in
     bubblewrap         # PartyDeck: sandboxing for controller isolation
     fuse-overlayfs     # PartyDeck: filesystem overlay for player profiles
     partydeckWithDesktop  # PartyDeck splitscreen launcher + .desktop entry
+    dlss5Swapper       # DLSS 5 Swapper (Linux fork) AppImage + .desktop entry
     godot_4            # game engine (TLS overlay applied above)
     appimage-run       # run AppImages in an FHS sandbox (zstd baked in via overlay)
     pince              # `pince [path]` = sudo + Wayland env + appimage-run wrapper
