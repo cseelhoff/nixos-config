@@ -21,4 +21,11 @@
     enable = true;
     idleTimeoutSeconds = 600;
   };
+
+  # Quality over first-audio latency: the server's defaults cut a line after 48 characters (then up to 300) so streaming
+  # starts quickly, but every cut is a separate generation with its own prosody. 600 keeps a whole spoken line in one piece.
+  systemd.services.qwen3-tts.environment = {
+    QWEN_TTS_FIRST_SEGMENT_MAX_CHARS = "600";
+    QWEN_TTS_SEGMENT_MAX_CHARS = "600";
+  };
 }

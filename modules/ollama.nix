@@ -9,20 +9,19 @@
 # Loopback only (default 127.0.0.1:11434): the brain and Ollama are co-located,
 # and the model store is not a LAN service.
 #
-# After the first `nixos-rebuild switch` that includes this module, build the
-# model once as your user (~22 GB, lands in /var/lib/ollama). It is imported from a
-# local GGUF rather than pulled — the abliterated build is what lets one model serve
-# both the GM and the Narrator (ADR 0032 Clarification 2026-08-19):
-#   ollama create qwen35-abliterated:27b -f ~/dnd-ai/Modelfile.qwen35-abliterated
-#   ollama show qwen35-abliterated:27b   # must list the `tools` capability
-# The LangGraph app then reaches it at http://localhost:11434.
+# After activating the updated service, pull the model as your user (stored by
+# the service in /var/lib/ollama):
+#   ollama pull qwen3.8:27b
+#   ollama show qwen3.8:27b   # must list the `tools` capability
+# The dnd-ai app reaches it at http://localhost:11434; select the tag separately
+# in the app. Existing models, including qwen35-abliterated:27b, are preserved.
 #
 # NOTE: Ollama is the CUDA-accelerated `ollama-cuda` from a dedicated pinned
 # nixpkgs (flake input `nixpkgs-ollama`, see flake.nix), NOT the system's stable
 # nixpkgs. The pin exists because a too-old bundled llama.cpp simply cannot load a
 # newer model architecture ("unknown model architecture: '<arch>'") — first hit on
-# gemma4 GGUFs under stable's 0.21.1, and the same constraint now binds on `qwen35`
-# (Qwen3.8's hybrid attention/SSM arch), which needs >=0.30. The first build compiles
+# gemma4 GGUFs under stable's 0.21.1. Version 0.30.7 also rejects the qwen3.8:27b
+# manifest with HTTP 412; the updated pin supplies 0.40.15. The first build compiles
 # CUDA Ollama from source (unfree CUDA isn't in the binary cache) — expect a long
 # initial rebuild.
 

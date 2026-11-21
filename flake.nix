@@ -7,11 +7,9 @@
     # Unstable cherry-pick — used per-package via specialArgs.nixpkgs-unstable
     # for things we want bleeding-edge (e.g. onedriver auth fixes).
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    # Ollama-only nixpkgs pin (consumed solely by modules/ollama.nix). Stable
-    # Stable has previously lagged the model architectures we actually run — it
-    # failed first on `gemma4` and would equally fail on `qwen35` (Qwen3.8's hybrid
-    # attention/SSM arch, the current brain), both surfacing as "unknown model
-    # architecture: '<arch>'" at load. Tracking unstable here keeps Ollama current.
+    # Ollama-only nixpkgs pin (consumed solely by modules/ollama.nix).
+    # Older runtimes reject newer architectures or model manifests: 0.30.7
+    # rejected qwen3.8:27b with HTTP 412. Update only this input for Ollama upgrades.
     # Kept SEPARATE from
     # nixpkgs-unstable on purpose: bumping Ollama must not churn the code-insiders
     # / odin / onedriver closures that follow that shared input.
@@ -26,7 +24,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     partydeck = {
-      url = "github:cseelhoff/partydeck";
+      url = "github:cseelhoff/partydeck?ref=feat/combined";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     code-insiders = {
@@ -58,9 +56,14 @@
       url = "git+file:///home/caleb/src/nix-foundryvtt";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    qwen3-tts = {
+      # Self-hosted Qwen3-TTS server + NixOS module (services.qwen3-tts) from the local project. A git+file input only
+      # sees COMMITTED files, so commit changes there, then `nix flake update qwen3-tts` here before rebuilding.
+      url = "git+file:///home/caleb/qwen3-tts-android";
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, nixpkgs-ollama, home-manager, nixos-wsl, partydeck, code-insiders, nixos-vscode-server, foundryvtt, ... }:
+  outputs = { self, nixpkgs, nixpkgs-unstable, nixpkgs-ollama, home-manager, nixos-wsl, partydeck, code-insiders, nixos-vscode-server, foundryvtt, qwen3-tts, ... }:
     let
       mkNixos = hostName: hostModule: nixpkgs.lib.nixosSystem {
         modules = [
@@ -69,7 +72,7 @@
           { networking.hostName = hostName; }
         ];
         specialArgs = {
-          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable nixpkgs-ollama nixos-vscode-server foundryvtt;
+          inherit self home-manager nixos-wsl partydeck code-insiders nixpkgs-unstable nixpkgs-ollama nixos-vscode-server foundryvtt qwen3-tts;
         };
       };
       forAllSystems = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ];

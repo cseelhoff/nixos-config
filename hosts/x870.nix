@@ -13,6 +13,7 @@
     ../modules/open-webui.nix
     ../modules/qemu.nix
     ../modules/tailscale.nix
+    ../modules/qwen3-tts.nix
   ];
 
   boot.loader = {

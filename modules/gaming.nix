@@ -11,7 +11,31 @@
 let
   isNvidia = lib.elem "nvidia" (config.services.xserver.videoDrivers or []);
 
-  partydeckPkg = partydeck.packages.x86_64-linux.default;
+  partydeckPackages = partydeck.packages.x86_64-linux;
+  gamescopeKbm = partydeckPackages.gamescope-kbm;
+  gamescopeKbmFixed = gamescopeKbm.overrideAttrs (old: {
+    # Bundled wlroots predates libinput's keypad-slide switch. Ignore switch
+    # types it cannot represent rather than emitting a bogus lid event.
+    postPatch = (old.postPatch or "") + ''
+      substituteInPlace subprojects/wlroots/backend/libinput/switch.c \
+        --replace-fail 'switch (libinput_event_switch_get_switch(sevent)) {' \
+        'switch (libinput_event_switch_get_switch(sevent)) {
+        default:
+          return;'
+    '';
+  });
+
+  partydeckPkg = partydeckPackages.default.overrideAttrs (old: {
+    # replaceStrings retains the old dependency's string context; replace that
+    # context too so Nix does not still try to build the broken gamescope.
+    postInstall = builtins.appendContext
+      (builtins.unsafeDiscardStringContext
+        (lib.replaceStrings [ "${gamescopeKbm}" ] [ "${gamescopeKbmFixed}" ] old.postInstall))
+      ((builtins.removeAttrs (builtins.getContext old.postInstall) [
+        (builtins.unsafeDiscardStringContext gamescopeKbm.drvPath)
+      ])
+        // builtins.getContext "${gamescopeKbmFixed}");
+  });
 
   # Start-menu entry for PartyDeck. The upstream package ships only the
   # binary, so we build a .desktop file with makeDesktopItem and merge

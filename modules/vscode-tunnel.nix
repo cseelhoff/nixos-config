@@ -1,4 +1,4 @@
-{ config, lib, pkgs, nixos-vscode-server, code-insiders, ... }:
+{ config, lib, pkgs, nixos-vscode-server, vscodeInsiders, ... }:
 
 # VS Code Remote Tunnels support.
 #
@@ -12,22 +12,6 @@
 #     file-based token storage so it comes back unattended after reboot
 #     (no keyring unlock required, no login session required).
 
-let
-  vscodeInsiders =
-    (code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider).overrideAttrs (old: {
-      patchPhase = (if builtins.hasAttr "patchPhase" old then old.patchPhase else "") + ''
-        rm -f resources/app/node_modules/@vscode/ripgrep/bin/rg || true
-      '';
-      preFixup = (if builtins.hasAttr "preFixup" old then old.preFixup else "") + ''
-        vsceSignUnpacked="$out/lib/vscode/resources/app/node_modules.asar.unpacked/@vscode/vsce-sign/bin/vsce-sign"
-        vsceSignMirror="$out/lib/vscode/resources/app/node_modules/@vscode/vsce-sign/bin/vsce-sign"
-        if [ -e "$vsceSignUnpacked" ] && [ ! -e "$vsceSignMirror" ]; then
-          mkdir -p "$(dirname "$vsceSignMirror")"
-          cp "$vsceSignUnpacked" "$vsceSignMirror"
-        fi
-      '';
-    });
-in
 {
   imports = [ nixos-vscode-server.nixosModules.default ];
 
@@ -35,16 +19,6 @@ in
   # login session. Without linger, the unit only fires after caleb's
   # first interactive login of the boot — defeating headless tunneling.
   users.users.caleb.linger = true;
-
-  # The GUI's "Turn on Remote Tunnel Access" toggle spawns its own
-  # `code-tunnel-insiders tunnel --name x870 --parent-process-id N` that
-  # shares ~/.vscode-insiders/cli (same singleton lock) with the service
-  # below. Whichever starts first owns the tunnel; the other attaches as a
-  # client. That is fine — but only if both read the SAME token store.
-  # Without this PAM-set variable the GUI-spawned one falls back to
-  # libsecret/kwallet, finds no token, and polls `authorization_pending`
-  # forever while holding the lock, silently disabling the tunnel.
-  environment.sessionVariables.VSCODE_CLI_USE_FILE_KEYCHAIN = "1";
 
   programs.nix-ld = {
     enable = true;
@@ -92,24 +66,6 @@ in
   #     tunnel user login --provider github
   #   systemctl --user enable --now code-insiders-tunnel.service
   # After that, reboots bring the tunnel back with no interaction.
-  #
-  # If the service is active but clients cannot connect, check:
-  #   VSCODE_CLI_USE_FILE_KEYCHAIN=1 code-insiders \
-  #     --cli-data-dir ~/.vscode-insiders/cli \
-  #     tunnel user show
-  #   VSCODE_CLI_USE_FILE_KEYCHAIN=1 code-insiders \
-  #     --cli-data-dir ~/.vscode-insiders/cli \
-  #     tunnel status
-  #   journalctl --user -u code-insiders-tunnel.service --since '30 min ago'
-  # Auth failures usually show up as `authorization_pending` / `expired_token`.
-  # Re-run the login command above with VSCODE_CLI_USE_FILE_KEYCHAIN=1 so the
-  # token lands in the same file keychain this systemd service reads.
-  #
-  # If the logs say "An existing tunnel is running on this machine", a stale
-  # GUI-launched singleton may be hijacking the service. Look for it with:
-  #   pgrep -af 'code.*tunnel|code-tunnel-insiders|\.vscode-insiders/cli'
-  # and stop the stale `code-tunnel-insiders tunnel --name x870 ...` process
-  # before restarting this service.
   systemd.user.services.code-insiders-tunnel = {
     description = "Visual Studio Code - Insiders Tunnel (declarative)";
     after = [ "network-online.target" ];
@@ -133,13 +89,6 @@ in
       gnutar
       gzip
       git             # vscode server frequently shells out to git
-      # The integrated terminals VS Code spawns are children of this
-      # service and inherit its PATH. Without the system and per-user
-      # profile dirs, those terminals (which aren't login shells and so
-      # never re-source /etc/profile) can't see system packages like
-      # `odin`/`clang` or home-manager programs like `zoxide`/`eza`.
-      "/run/current-system/sw"
-      "/etc/profiles/per-user/caleb"
     ];
 
     environment = {

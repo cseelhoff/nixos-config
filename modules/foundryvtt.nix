@@ -10,15 +10,13 @@
 # IMPORTANT — the proprietary server zip is NOT fetched by Nix. Foundry
 # requires a login to download, so the package is a `requireFile`
 # derivation: the zip must already be in the store (by name + sha256)
-# for the build to succeed. Currently pinned: build 14.364, already
+# for the build to succeed. Currently pinned: build 14.370, already
 # added with a GC root at ~/.nix-foundry-roots/ so nix-collect-garbage
 # can't drop it.
 #
 # The `foundryvtt` flake input points at a LOCAL clone
-# (~/src/nix-foundryvtt), not upstream github, because upstream only
-# packages up to 14.361 while the Foundry site serves 14.364. The clone
-# carries a locally-generated 14.364 entry produced by the repo's own
-# updateScript. See the input comment in flake.nix.
+# (~/src/nix-foundryvtt) synced to upstream 14.370 (`f20f57b`). See the
+# input comment in flake.nix.
 #
 # UPGRADING to a newer Foundry build later:
 #   1. Download the new *Linux/NodeJS* build (NOT the Windows/macOS app)

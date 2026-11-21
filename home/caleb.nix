@@ -17,6 +17,8 @@ let
   # ripgrep binary removal (some upstream releases lack that path).
   ciPkg = code-insiders.packages.${pkgs.stdenv.hostPlatform.system}.vscode-insider;
   ciPatched = ciPkg.overrideAttrs (old: {
+    runtimeDependencies = (old.runtimeDependencies or []) ++ [ (lib.getLib pkgs.openssl) ];
+    appendRunpaths = (old.appendRunpaths or []) ++ [ (lib.makeLibraryPath [ pkgs.openssl ]) ];
     patchPhase = (if builtins.hasAttr "patchPhase" old then old.patchPhase else "") + ''
       rm -f resources/app/node_modules/@vscode/ripgrep/bin/rg || true
     '';
@@ -49,6 +51,8 @@ let
   };
 in
 {
+  _module.args.vscodeInsiders = ciPatched;
+
   home-manager.users.caleb = {
     imports = [
       ./common.nix

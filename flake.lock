@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791519692,
-        "narHash": "sha256-5yyAMF3I3/lpfe31CB+3llZNd3vPeEn0ENiobM8wGSc=",
+        "lastModified": 1794896324,
+        "narHash": "sha256-fe8SKWi+av+gVbHJHt3Drcu+RAK0PAq4I6k+N/cX+Iw=",
         "owner": "iosmanthus",
         "repo": "code-insiders-flake",
-        "rev": "1a74b629927ba1d637e58459698ff66e4a2cccb1",
+        "rev": "d5b7b3fd0343e23aea5eb42e897f562a6ca65e7f",
         "type": "github"
       },
       "original": {
@@ -61,11 +61,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786747430,
-        "narHash": "sha256-XhsLw5mSJt50geg9QHEvm60lf2m4P2eDxR6Ut/x/84c=",
+        "lastModified": 1794172055,
+        "narHash": "sha256-B3jjBr6nPjyiiQpVjQN0opU9XH8HMEG39obNFlsuFG0=",
         "ref": "refs/heads/main",
-        "rev": "2c83b0d5dbd2e74700d6636dc3c700bf94535d7e",
-        "revCount": 162,
+        "rev": "f20f57bb17e9b98e54cffa1f63f1dacc018d5eda",
+        "revCount": 170,
         "type": "git",
         "url": "file:///home/caleb/src/nix-foundryvtt"
       },
@@ -168,11 +168,11 @@
     },
     "nixpkgs-ollama": {
       "locked": {
-        "lastModified": 1782467914,
-        "narHash": "sha256-pGvFkM8N0xEkIIXDe5YYfbEAvHrk4IxBrjB/x8OomhE=",
+        "lastModified": 1794386569,
+        "narHash": "sha256-x9sADJvoVG0L6RejZB+/BB4YiGZFBZrfTlhF4uBq1tQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e73de5be04e0eff4190a1432b946d469c794e7b4",
+        "rev": "d4f25a3e562008648d45bcf2d70bcc7422cad84e",
         "type": "github"
       },
       "original": {
@@ -198,6 +198,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1782847189,
+        "narHash": "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "b6018f87da91d19d0ab4cf979885689b469cdd41",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "partydeck": {
       "inputs": {
         "nixpkgs": [
@@ -205,17 +221,36 @@
         ]
       },
       "locked": {
-        "lastModified": 1779560513,
-        "narHash": "sha256-jruehPdHXqgGUtk2DUEUv4ecb/+bYeEGbuxPSN45OHI=",
+        "lastModified": 1792251305,
+        "narHash": "sha256-C18CFeMJ2EaoqWJni3sTB9bmklBJOWIqjgdz9x/whi4=",
         "owner": "cseelhoff",
         "repo": "partydeck",
-        "rev": "431de9730046f406c93485191b9e92c144a31b0a",
+        "rev": "1d2e63e50dc563e14a69be23c1e4e4a5b85fb46b",
         "type": "github"
       },
       "original": {
         "owner": "cseelhoff",
+        "ref": "feat/combined",
         "repo": "partydeck",
         "type": "github"
+      }
+    },
+    "qwen3-tts": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1793683369,
+        "narHash": "sha256-Z0CXpHqNmIHYckZxj//9H30qGOEgG3Wbn712++PUYgY=",
+        "ref": "refs/heads/master",
+        "rev": "e925108df721c84ad09c8aa7cc697158a27bc4ec",
+        "revCount": 1,
+        "type": "git",
+        "url": "file:///home/caleb/qwen3-tts-android"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/caleb/qwen3-tts-android"
       }
     },
     "root": {
@@ -228,7 +263,8 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-ollama": "nixpkgs-ollama",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "partydeck": "partydeck"
+        "partydeck": "partydeck",
+        "qwen3-tts": "qwen3-tts"
       }
     }
   },
