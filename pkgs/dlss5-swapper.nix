@@ -1,6 +1,7 @@
 {
   lib,
   appimageTools,
+  asar,
   fetchurl,
 }:
 
@@ -23,10 +24,72 @@ let
 
   appimageContents = appimageTools.extract {
     inherit pname version src;
+
+    # Upstream v2.2.9-linux.5 joins uppercase 'System32'/'SysWOW64' and mixed-case
+    # DLL names against Proton's lowercase `<prefix>/drive_c/windows/system32` on
+    # case-sensitive Linux filesystems, causing false-positive "Install or repair
+    # the official Microsoft Visual C++ runtime" failures on Proton prefixes.
+    postExtract = ''
+      ${lib.getExe asar} extract $out/resources/app.asar "$TMPDIR/app"
+      chmod -R u+w "$TMPDIR/app" "$out/resources"
+
+      substituteInPlace "$TMPDIR/app/src/core/runtime-components.js" \
+        --replace-fail \
+          "function missingVCRuntime(bitness, exeDir, systemRoot = process.env.SystemRoot, extra = []) {
+  if (!systemRoot) return [];
+  const systemDir = path.join(systemRoot, bitness === 32 ? 'SysWOW64' : 'System32');
+  const names = ['msvcp140.dll', 'vcruntime140.dll', ...(bitness === 64 ? ['vcruntime140_1.dll'] : []), ...extra];
+  return names.filter(name => {
+    const local = exeDir && path.join(exeDir, name);
+    const file = local && fs.existsSync(local) ? local : path.join(systemDir, name);
+    return pe.getBitness(file) !== bitness;
+  });
+}" \
+          "function resolveCaseInsensitive(dir, name) {
+  if (!dir) return null;
+  const direct = path.join(dir, name);
+  if (fs.existsSync(direct)) return direct;
+  try {
+    const lower = name.toLowerCase();
+    const match = fs.readdirSync(dir).find(entry => entry.toLowerCase() === lower);
+    return match ? path.join(dir, match) : direct;
+  } catch { return direct; }
+}
+
+function missingVCRuntime(bitness, exeDir, systemRoot = process.env.SystemRoot, extra = []) {
+  if (!systemRoot) return [];
+  const systemDir = resolveCaseInsensitive(systemRoot, bitness === 32 ? 'SysWOW64' : 'System32');
+  const names = ['msvcp140.dll', 'vcruntime140.dll', ...(bitness === 64 ? ['vcruntime140_1.dll'] : []), ...extra];
+  return names.filter(name => {
+    const local = exeDir && resolveCaseInsensitive(exeDir, name);
+    const file = local && fs.existsSync(local) ? local : resolveCaseInsensitive(systemDir, name);
+    return pe.getBitness(file) !== bitness;
+  });
+}"
+
+      substituteInPlace "$TMPDIR/app/src/core/compatibility.js" \
+        --replace-fail \
+          "  const file = path.join(exeDir, 'D3DCompiler_47.dll');" \
+          "  let match = 'D3DCompiler_47.dll';
+  try { match = fs.readdirSync(exeDir).find(item => item.toLowerCase() === 'd3dcompiler_47.dll') || match; } catch {}
+  const file = path.join(exeDir, match);"
+
+      substituteInPlace "$TMPDIR/app/src/core/apply.js" \
+        --replace-fail \
+          "  const system = path.join(systemRoot, 'System32', 'D3DCompiler_47.dll');" \
+          "  const sysDirName = (() => { try { return fs.readdirSync(systemRoot).find(e => e.toLowerCase() === 'system32') || 'System32'; } catch { return 'System32'; } })();
+  const sysDir = path.join(systemRoot, sysDirName);
+  const sysDllName = (() => { try { return fs.readdirSync(sysDir).find(e => e.toLowerCase() === 'd3dcompiler_47.dll') || 'D3DCompiler_47.dll'; } catch { return 'D3DCompiler_47.dll'; } })();
+  const system = path.join(sysDir, sysDllName);"
+
+      rm -rf "$out/resources/app.asar" "$out/resources/app.asar.unpacked"
+      ${lib.getExe asar} pack --unpack-dir "node_modules/7zip-bin" "$TMPDIR/app" "$out/resources/app.asar"
+    '';
   };
 in
-appimageTools.wrapType2 {
-  inherit pname version src;
+appimageTools.wrapAppImage {
+  inherit pname version;
+  src = appimageContents;
 
   extraPkgs =
     pkgs: with pkgs; [
