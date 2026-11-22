@@ -29,6 +29,29 @@ let
         mkdir -p "$(dirname "$vsceSignMirror")"
         cp "$vsceSignUnpacked" "$vsceSignMirror"
       fi
+
+      # auto-patchelf only skips ET_EXEC static binaries, not ET_DYN musl
+      # static-pie binaries (tgrep, ripgrep-universal, copilot-sdk rg); with
+      # appendRunpaths set it runs `patchelf --set-rpath` on them and breaks
+      # musl static-pie self-relocation (SIGSEGV on start). Snapshot static-pie
+      # ELFs before strip/autoPatchelf and restore them at the end of postFixup.
+      staticPieBackup="$TMPDIR/vscode-static-pie-backup"
+      mkdir -p "$staticPieBackup"
+      while IFS= read -r -d "" elfFile; do
+        if file -b "$elfFile" | grep -q 'static-pie linked'; then
+          relPath="''${elfFile#"$out/"}"
+          mkdir -p "$staticPieBackup/$(dirname "$relPath")"
+          cp -p "$elfFile" "$staticPieBackup/$relPath"
+        fi
+      done < <(find "$out" -type f -executable -print0)
+
+      restoreStaticPieBinaries() {
+        while IFS= read -r -d "" savedFile; do
+          relPath="''${savedFile#"$staticPieBackup/"}"
+          install -m755 "$savedFile" "$out/$relPath"
+        done < <(find "$staticPieBackup" -type f -print0)
+      }
+      postFixupHooks+=(restoreStaticPieBinaries)
     '';
   });
   ubuntu24Launcher = pkgs.writeShellScript "ubuntu24-vm" ''
